@@ -20,6 +20,17 @@ router.get('/', async (req, res) => {
     parents.rows.forEach(p => { parentMap[p.id] = p; });
   }
 
+  // 当前登录用户已点赞的消息（未登录则全为 false）
+  let likedSet = new Set();
+  const token = req.headers.authorization || req.query.token;
+  if (token) {
+    const s = (await query('SELECT user_id FROM sessions WHERE token = $1', [token])).rows[0];
+    if (s) {
+      const likedRows = (await query('SELECT post_id FROM post_likes WHERE user_id = $1', [s.user_id])).rows;
+      likedSet = new Set(likedRows.map(r => Number(r.post_id)));
+    }
+  }
+
   const output = messages.map(m => {
     let replyTo = null;
     if (m.parent_id && parentMap[m.parent_id]) {
@@ -30,7 +41,7 @@ router.get('/', async (req, res) => {
     // Only include URL-based images (not base64) to keep response lean
     const displayableImages = parsedImages.filter(img => img && !img.startsWith('data:'));
     const { images, ...rest } = m;
-    return { ...rest, images: displayableImages, imageCount: parsedImages.length, replyTo };
+    return { ...rest, images: displayableImages, imageCount: parsedImages.length, replyTo, liked: likedSet.has(Number(m.id)) };
   });
   res.json(output);
 });

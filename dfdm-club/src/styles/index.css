@@ -1,0 +1,108 @@
+@import "tailwindcss";
+
+@theme {
+  --color-accent: #e75a7c;
+  --color-accent-hover: #d44a6c;
+  --color-accent-light: #fef0f4;
+  --color-ink: #1a1a2e;
+  --color-paper: #fafafa;
+  --color-card: #ffffff;
+  --color-border: #e8e8e8;
+}
+
+:root {
+  --bg: #fafafa;
+  --bg-card: #ffffff;
+  --bg-sidebar: #ffffff;
+  --text: #333333;
+  --text-light: #666666;
+  --text-muted: #999999;
+  --border: #e8e8e8;
+  --accent: #e75a7c;
+  --accent-hover: #d44a6c;
+  --accent-light: #fef0f4;
+  --shadow: 0 2px 12px rgba(0, 0, 0, 0.06);
+  --shadow-hover: 0 4px 20px rgba(0, 0, 0, 0.10);
+  --radius: 8px;
+  --radius-lg: 12px;
+  --max-width: 1200px;
+  --header-height: 60px;
+  --font-sans: "PingFang SC", "Noto Sans SC", "Microsoft YaHei", "Hiragino Sans GB", sans-serif;
+  --font-mono: "SF Mono", "Fira Code", "Consolas", monospace;
+  --transition: 0.2s ease;
+}
+
+* {
+  font-family: var(--font-sans);
+}
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--text);
+  line-height: 1.6;
+}
+
+a {
+  color: var(--accent);
+  text-decoration: none;
+}
+
+@keyframes shimmer {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes likeBounce {
+  0%   { transform: scale(1); }
+  30%  { transform: scale(1.35); }
+  60%  { transform: scale(0.85); }
+  80%  { transform: scale(1.08); }
+  100% { transform: scale(1); }
+}
+
+@keyframes countPop {
+  0%   { transform: translateY(0); opacity: 1; }
+  40%  { transform: translateY(-6px); opacity: 0; }
+  60%  { transform: translateY(6px); opacity: 0; }
+  100% { transform: translateY(0); opacity: 1; }
+}
+
+@keyframes fortuneShake {
+  0%,100% { transform: rotate(0); }
+  15% { transform: rotate(3deg); }
+  30% { transform: rotate(-3deg); }
+  45% { transform: rotate(2deg); }
+  60% { transform: rotate(-2deg); }
+  75% { transform: rotate(1deg); }
+  90% { transform: rotate(-1deg); }
+}
+
+@keyframes fortunePop {
+  0% { transform: scale(0.95); opacity: 0.5; }
+  60% { transform: scale(1.04); }
+  100% { transform: scale(1); opacity: 1; }
+}
+
+.skeleton {
+  background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite;
+  border-radius: var(--radius);
+}
+
+.fade-in {
+  opacity: 0;
+  transform: translateY(8px);
+  transition: opacity 0.5s ease, transform 0.5s ease;
+}
+
+.fade-in.visible {
+  opacity: 1;
+  transform: translateY(0);
+}

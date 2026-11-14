@@ -31,20 +31,80 @@ router.post('/login', async (req, res) => {
   res.json({ token, user: { id: user.id, username: user.username, role: user.role } });
 });
 
+// ---- 账号找回：简易内存限流 ----
+// 同一 IP + 用户名 15 分钟内最多 6 次失败；同一 IP 总计最多 30 次（避免校园网共享出口被个别用户拖累）
+const recoverAttempts = new Map();
+const ATTEMPT_WINDOW = 15 * 60 * 1000;
+const IP_LIMIT = 30;
+function clientIp(req) {
+  const fwd = (req.headers['x-forwarded-for'] || '').split(',')[0].trim();
+  return fwd || req.socket.remoteAddress || 'unknown';
+}
+function overLimit(key, limit) {
+  const rec = recoverAttempts.get(key);
+  if (!rec) return false;
+  if (Date.now() - rec.first > ATTEMPT_WINDOW) { recoverAttempts.delete(key); return false; }
+  return rec.count >= limit;
+}
+function noteFailure(keys) {
+  const now = Date.now();
+  keys.forEach(function (key) {
+    const rec = recoverAttempts.get(key);
+    if (!rec || now - rec.first > ATTEMPT_WINDOW) recoverAttempts.set(key, { count: 1, first: now });
+    else rec.count += 1;
+  });
+  if (recoverAttempts.size > 5000) recoverAttempts.clear();
+}
+function clearAttempts(keys) { keys.forEach(function (k) { recoverAttempts.delete(k); }); }
+function rateLimited(req, action, username, limit) {
+  const ip = clientIp(req);
+  const ipKey = action + '|ip|' + ip;
+  const userKey = action + '|ip|' + ip + '|u|' + (username || '');
+  const keys = username ? [ipKey, userKey] : [ipKey];
+  const limited = overLimit(ipKey, IP_LIMIT) || overLimit(username ? userKey : ipKey, limit);
+  return { limited: limited, keys: keys };
+}
+
+const MISMATCH = '用户名、手机号或QQ号不正确';
+
 router.post('/reset-password', async (req, res) => {
   const { username, phone, qq, newPassword } = req.body;
+  const rl = rateLimited(req, 'reset', username, 6);
+  if (rl.limited) return res.status(429).json({ error: '尝试次数过多，请 15 分钟后再试' });
   if (!username) return res.status(400).json({ error: '请输入用户名' });
   if (!phone || !qq) return res.status(400).json({ error: '请输入手机号和QQ号以验证身份' });
   if (!newPassword || newPassword.length < 4) return res.status(400).json({ error: '新密码至少4位' });
   const user = (await query('SELECT * FROM users WHERE username = $1', [username])).rows[0];
-  if (!user) return res.status(400).json({ error: '用户名不存在' });
-  if (user.phone && user.phone !== phone) return res.status(400).json({ error: '手机号验证失败' });
-  if (user.qq && user.qq !== qq) return res.status(400).json({ error: 'QQ号验证失败' });
+  if (!user) { noteFailure(rl.keys); return res.status(400).json({ error: MISMATCH }); }
+  if (!user.phone || !user.qq) {
+    return res.status(400).json({ error: '该账号未绑定手机号或QQ号，无法自助找回，请联系社团管理员重置密码' });
+  }
+  if (user.phone !== phone || user.qq !== qq) {
+    noteFailure(rl.keys);
+    return res.status(400).json({ error: MISMATCH });
+  }
   const hash = bcrypt.hashSync(newPassword, 10);
   await query('UPDATE users SET password = $1 WHERE id = $2', [hash, user.id]);
   // Clear all existing sessions for security
   await query('DELETE FROM sessions WHERE user_id = $1', [user.id]);
+  clearAttempts(rl.keys);
   res.json({ ok: true });
+});
+
+// 用手机号 + QQ号 找回用户名
+router.post('/find-username', async (req, res) => {
+  const { phone, qq } = req.body;
+  const rl = rateLimited(req, 'find', '', 12);
+  if (rl.limited) return res.status(429).json({ error: '尝试次数过多，请 15 分钟后再试' });
+  if (!phone || !qq) return res.status(400).json({ error: '请输入注册时填写的手机号和QQ号' });
+  const user = (await query('SELECT username, created_at FROM users WHERE phone = $1 AND qq = $2 LIMIT 1', [phone, qq])).rows[0];
+  if (!user) {
+    noteFailure(rl.keys);
+    return res.status(404).json({ error: '没有匹配的账号，请检查手机号和QQ号是否与注册时一致' });
+  }
+  clearAttempts(rl.keys);
+  const joined = new Date(user.created_at).toISOString().slice(0, 10);
+  res.json({ username: user.username, hint: '注册于 ' + joined });
 });
 
 router.get('/me', authRequired, async (req, res) => {

@@ -6,7 +6,7 @@
   <meta name="description" content="东方动漫社「神秘据点」— 动漫爱好者的专属线上交流与互动平台，汇聚活动、集市、月刊、同人创作与社群交流。">
   <title>东方动漫社 · 神秘据点</title>
   <link rel="stylesheet" href="css/style.css">
-  <link rel="icon" href="images/logo.jpg">
+  <link rel="icon" href="images/logo.webp">
 </head>
 <body>
 
@@ -14,7 +14,7 @@
 <header class="site-header">
   <div class="header-inner">
     <a href="index.html" class="logo">
-      <img src="images/logo.jpg" alt="东方动漫社" class="logo-img">
+      <img src="images/logo.webp" alt="东方动漫社" class="logo-img">
       东方动漫社
     </a>
     <nav class="nav-links">
@@ -79,7 +79,7 @@
       </div>
     </div>
     <div class="hero-mascot">
-      <img src="images/mascot1.png" alt="社娘">
+      <img src="images/mascot1.webp" alt="社娘">
     </div>
   </section>
 
@@ -130,11 +130,11 @@
     <h2 class="section-title">社团简介</h2>
     <div style="background:var(--bg-card);border:1px solid var(--border);border-radius:12px;padding:28px;line-height:2;font-size:14px;color:var(--text-light);margin-bottom:24px;">
       <div style="display:flex;gap:16px;justify-content:center;flex-wrap:wrap;margin-bottom:20px;">
-        <img src="images/mascot2.png" alt="社娘" style="width:180px;max-width:45%;border-radius:8px;object-fit:cover;">
-        <img src="images/mascot3.png" alt="社娘" style="width:180px;max-width:45%;border-radius:8px;object-fit:cover;">
+        <img src="images/mascot2.webp" alt="社娘" style="width:180px;max-width:45%;border-radius:8px;object-fit:cover;">
+        <img src="images/mascot3.webp" alt="社娘" style="width:180px;max-width:45%;border-radius:8px;object-fit:cover;">
       </div>
-      <p style="text-indent:2em;margin-bottom:12px;">湖北汽车工业学院东方动漫社是在校社团联合会的领导下，由校内ACGN爱好者们组成的一个面向校内的学生社团组织。2005年9月，经东方动漫社内部高层商议并决定，成立一个新社团，用自己的理念与主张，面向全校招纳ACGN爱好者。通过COSPLAY（动漫角色扮演）、绘画、音乐、剧本、表演、欣赏等方式让社团感受和了解动漫文化。提高全校各个院系动漫爱好者对于动漫文化的了解，同时能让同学们在专业课学习之余能够对自己的爱好有一定的良性发展，我社的宗旨是在发展爱好，放松娱乐的同时，提高自己各个方面的实际能力。</p>
-      <p style="text-indent:2em;margin-bottom:12px;">目前东方动漫社在校团委直属的社团联合会的领导下，已经来到第二十届，未来也必将发挥好作为学生社团的作用，培养学生的兴趣以及各个方面的能力，让学生全面发展，劳逸结合，并在集体中收获友谊，在活动中学会合作，在欢乐中获取知识。</p>
+      <p style="text-indent:2em;margin-bottom:12px;">东方动漫社是由校内ACGN爱好者组成、面向校内的学生社团组织。2005年9月，经社团内部商议决定，以自身理念与主张面向全校招纳ACGN爱好者。社团通过COSPLAY（动漫角色扮演）、绘画、音乐、剧本、表演、欣赏等方式，让成员感受和了解动漫文化，提升全校各院系动漫爱好者对动漫文化的了解，同时让同学们在专业课学习之余能够良性发展个人爱好。本社宗旨是在发展爱好、放松娱乐的同时，提高各方面的实际能力。</p>
+      <p style="text-indent:2em;margin-bottom:12px;">目前东方动漫社已来到第二十一届，未来将继续发挥好学生社团的作用，培养学生的兴趣以及各方面的能力，让学生全面发展、劳逸结合，并在集体中收获友谊，在活动中学会合作，在欢乐中获取知识</p>
     </div>
 
     <!-- Recent Activities Preview -->
@@ -209,6 +209,11 @@
 <footer class="site-footer">
   <div class="footer-inner">
     <p>&copy; 2026 东方动漫社 · 神秘据点 | Powered by Love &amp; ACG</p>
+    <div class="footer-beian">
+      <span>制作人：浅 —— <a href="contact.html">联系制作人</a></span>
+      <a href="https://beian.miit.gov.cn/" target="_blank" rel="noreferrer">鄂ICP备2026040004号-1</a>
+      <a href="https://beian.mps.gov.cn/#/query/webSearch?code=42030002420406" target="_blank" rel="noreferrer">鄂公网安备42030002420406号</a>
+    </div>
   </div>
 </footer>
 
@@ -369,5 +374,6 @@ fetch('/api/monthly').then(function(r) { return r.json(); }).then(function(data)
   document.getElementById('homeMonthly').innerHTML = '<div class="article-card" style="text-align:center;color:var(--text-muted);padding:20px;display:block;">加载失败~</div>';
 });
 </script>
-<script>fetch("/api/stats").then(function(r){return r.json()}).then(function(s){var el;if(el=document.getElementById("statMembers"))el.textContent=s.members||"328";if(el=document.getElementById("statWorks"))el.textContent=(s.works||"1247").toLocaleString();if(el=document.getElementById("statEvents"))el.textContent=s.events||"56";if(el=document.getElementById("statMonths"))el.textContent=s.months||"12"})</script></body>
+<script>fetch("/api/stats").then(function(r){return r.json()}).then(function(s){var el;if(el=document.getElementById("statMembers"))el.textContent=s.members||"328";if(el=document.getElementById("statWorks"))el.textContent=(s.works||"1247").toLocaleString();if(el=document.getElementById("statEvents"))el.textContent=s.events||"56";if(el=document.getElementById("statMonths"))el.textContent=s.months||"12"})</script>  <script src="/pet/pet.js"></script>
+</body>
 </html>

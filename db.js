@@ -8,14 +8,13 @@ if (!process.env.DATABASE_URL) {
 
 const isNeon = process.env.DATABASE_URL.includes('neon.tech');
 
-const pool = new Pool({
-  connectionString: process.env.DATABASE_URL,
-  ssl: isNeon ? { rejectUnauthorized: false } : false
-});
+// Inject Beijing timezone into the connection string so it takes effect at connection time
+const dbUrl = new URL(process.env.DATABASE_URL);
+dbUrl.searchParams.set('options', "-c timezone=Asia/Shanghai");
 
-// Ensure every connection uses Beijing time (UTC+8)
-pool.on('connect', async (client) => {
-  await client.query("SET timezone = 'Asia/Shanghai'");
+const pool = new Pool({
+  connectionString: dbUrl.toString(),
+  ssl: isNeon ? { rejectUnauthorized: false } : false
 });
 
 async function query(sql, params = []) {

@@ -505,6 +505,123 @@ ul, ol { list-style: none; }
   align-items: center;
   gap: 4px;
 }
+.footer-beian {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  align-items: center;
+  gap: 4px 12px;
+  margin-top: 8px;
+}
+.footer-beian a {
+  color: inherit;
+  text-decoration: none;
+}
+.footer-beian a:hover {
+  color: var(--text);
+  text-decoration: underline;
+}
+
+/* --- Contact / 制作人信息页 --- */
+.contact-card {
+  max-width: 760px;
+  margin: 0 auto;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow);
+  overflow: hidden;
+}
+.contact-hero {
+  padding: 32px 24px;
+  text-align: center;
+  border-bottom: 1px solid var(--border);
+  background: linear-gradient(180deg, var(--accent-light), var(--bg-card));
+}
+.contact-hero-label {
+  font-size: 13px;
+  letter-spacing: 2px;
+  color: var(--text-muted);
+  margin-bottom: 8px;
+}
+.contact-name {
+  margin: 0;
+  font-size: 34px;
+  font-weight: 700;
+  letter-spacing: 3px;
+  color: var(--text);
+}
+.contact-alias {
+  margin-top: 8px;
+  font-size: 14px;
+  color: var(--text-light);
+}
+.contact-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 12px;
+  padding: 24px;
+}
+.contact-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 16px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  background: var(--bg);
+  text-decoration: none;
+  color: inherit;
+  transition: var(--transition);
+}
+a.contact-item:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-hover);
+  border-color: var(--accent);
+}
+.contact-icon {
+  width: 44px;
+  height: 44px;
+  flex-shrink: 0;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+}
+.contact-text {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+.contact-label {
+  font-size: 12px;
+  color: var(--text-muted);
+  margin-bottom: 2px;
+}
+.contact-value {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--text);
+  word-break: break-all;
+  user-select: all;
+}
+.contact-note {
+  margin: 0;
+  padding: 0 24px 24px;
+  font-size: 12px;
+  line-height: 1.8;
+  color: var(--text-muted);
+}
+@media screen and (max-width: 600px) {
+  .contact-grid {
+    grid-template-columns: 1fr;
+    padding: 16px;
+  }
+  .contact-name {
+    font-size: 28px;
+  }
+}
 
 /* --- Page Header (for sub-pages) --- */
 .page-header {

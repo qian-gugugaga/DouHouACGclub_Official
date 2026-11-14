@@ -1,0 +1,24 @@
+0.3.11 — 图片加载优化（2026-11-03）
+
+问题：图片加载极慢，最大单图 6.38MB，在约 2.9Mbps 带宽下需 18 秒以上。
+
+优化内容：
+1. 全站图片转 WebP（长边 1600px、quality 82、不透明图去除 alpha 通道）
+   - 31.94MB -> 1.53MB，整体减小 95.2%
+   - public/images：logo、mascot1~4 共 5 张
+   - uploads：9 张用户上传图
+2. 同步更新数据库引用：fanwork_submissions 3 条、guestbook_messages 6 条
+3. 全站 HTML 图片引用改为 .webp（index/activities/contact/fanworks/guestbook/
+   market/members/monthly/profile/admin）
+4. nginx 配置：
+   - /images/ 与 /uploads/ 由 nginx 直接返回，不再经过 Node
+   - 静态图片加 Cache-Control: public, max-age=2592000, immutable（30 天）
+   - 开启 gzip（首页 HTML 19.9KB -> 7.3KB）
+
+顺带修复：
+- uploads/1785492996806_0.png 实际文件内容为 HEIC 格式（扩展名是 .png），
+  浏览器无法显示，留言板该图一直是坏图。已用 WPF 解码转为正常 WebP。
+
+已知未处理：
+- 后台上传端仍未做前端压缩，新上传的大图仍是原图
+- 旧的原图（28MB）暂留在 uploads/ 中未删除

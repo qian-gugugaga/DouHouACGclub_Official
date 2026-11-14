@@ -6,14 +6,263 @@
   <meta name="description" content="东方动漫社留言板 — 水帖、吐槽、反馈建议，社员交流的温馨角落">
   <title>留言板 · 东方动漫社</title>
   <link rel="stylesheet" href="css/style.css">
-  <link rel="icon" href="images/logo.jpg">
+  <link rel="icon" href="images/logo.webp">
+  <style>
+  /* ===== 留言板 · 频道式布局 ===== */
+  .chan-app{
+    display:grid;
+    grid-template-columns:250px minmax(0,1fr) 214px;
+    height:clamp(600px, calc(100vh - 150px), 900px);
+    min-height:560px;
+    border:1px solid var(--border);
+    border-radius:var(--radius-lg);
+    overflow:hidden;
+    background:var(--bg-card);
+    box-shadow:var(--shadow);
+    position:relative;
+  }
+
+  /* --- 左栏：话题列表 --- */
+  .chan-rail{
+    display:flex;flex-direction:column;min-height:0;
+    background:#f7f7f9;border-right:1px solid var(--border);
+  }
+  .chan-guild{display:flex;align-items:center;gap:10px;padding:14px 14px 10px;}
+  .chan-guild-icon{
+    width:34px;height:34px;border-radius:10px;flex-shrink:0;
+    background:linear-gradient(135deg,#e75a7c,#f0a0b4);color:#fff;
+    display:flex;align-items:center;justify-content:center;font-weight:700;font-size:16px;
+  }
+  .chan-guild-name{font-size:14px;font-weight:700;line-height:1.2;}
+  .chan-guild-sub{font-size:11px;color:var(--text-muted);margin-top:2px;}
+  .chan-search{padding:0 12px 8px;}
+  .chan-search input{
+    width:100%;padding:7px 10px;border:1px solid var(--border);border-radius:8px;
+    font-size:12.5px;background:#fff;outline:none;font-family:var(--font-sans);
+  }
+  .chan-search input:focus{border-color:var(--accent);}
+  .chan-rail-label{
+    display:flex;align-items:center;justify-content:space-between;
+    padding:6px 14px;font-size:11px;font-weight:600;color:var(--text-muted);
+    letter-spacing:.04em;
+  }
+  .chan-topic-list{
+    flex:1;overflow-y:auto;padding:0 8px 14px;
+    -webkit-mask-image:linear-gradient(to bottom,#000 calc(100% - 14px),transparent);
+    mask-image:linear-gradient(to bottom,#000 calc(100% - 14px),transparent);
+  }
+  .chan-topic{
+    display:flex;align-items:flex-start;gap:6px;
+    padding:8px 10px;border-radius:8px;cursor:pointer;
+    transition:background var(--transition);position:relative;
+  }
+  .chan-topic:hover{background:#eeeef2;}
+  .chan-topic.active{background:#fff;box-shadow:0 1px 3px rgba(0,0,0,.06);}
+  .chan-topic.active::before{
+    content:'';position:absolute;left:0;top:8px;bottom:8px;width:3px;
+    border-radius:0 3px 3px 0;background:var(--accent);
+  }
+  .chan-topic-hash{color:var(--text-muted);font-size:14px;font-weight:700;line-height:1.35;}
+  .chan-topic.active .chan-topic-hash{color:var(--accent);}
+  .chan-topic-body{min-width:0;flex:1;}
+  .chan-topic-title{
+    font-size:13px;font-weight:600;line-height:1.35;
+    white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+  }
+  .chan-topic-sub{font-size:11px;color:var(--text-muted);margin-top:2px;}
+  .chan-topic-sub b{color:var(--accent);font-weight:600;}
+  .chan-rail-foot{padding:10px 12px;border-top:1px solid var(--border);}
+  .chan-new-btn{
+    width:100%;padding:9px;border:none;border-radius:8px;cursor:pointer;
+    background:var(--accent);color:#fff;font-size:13px;font-weight:600;
+    font-family:var(--font-sans);transition:background var(--transition);
+  }
+  .chan-new-btn:hover{background:var(--accent-hover);}
+
+  /* --- 中栏：消息流 --- */
+  .chan-main{display:flex;flex-direction:column;min-width:0;min-height:0;background:#fff;}
+  .chan-head{
+    display:flex;align-items:center;gap:10px;
+    padding:12px 18px;border-bottom:1px solid var(--border);flex-shrink:0;
+  }
+  .chan-head-hash{color:var(--text-muted);font-size:18px;font-weight:700;}
+  .chan-head-title{
+    font-size:15px;font-weight:700;min-width:0;
+    white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+  }
+  .chan-head-meta{font-size:11.5px;color:var(--text-muted);white-space:nowrap;}
+  .chan-head-right{margin-left:auto;display:flex;align-items:center;gap:8px;}
+  .chan-like{
+    display:inline-flex;align-items:center;gap:5px;border:1px solid var(--border);
+    background:#fff;border-radius:20px;padding:4px 10px;cursor:pointer;
+    font-size:12px;color:var(--text-light);font-family:var(--font-sans);
+    transition:all var(--transition);
+  }
+  .chan-like svg{width:14px;height:14px;}
+  .chan-like:hover{border-color:var(--accent);color:var(--accent);}
+  .chan-like.liked{border-color:var(--accent);color:var(--accent);background:var(--accent-light);}
+  .chan-like.bounce svg{animation:chanPop .4s ease;}
+  @keyframes chanPop{0%{transform:scale(1)}40%{transform:scale(1.35)}100%{transform:scale(1)}}
+  .chan-icon-btn{
+    display:none;border:1px solid var(--border);background:#fff;border-radius:8px;
+    width:32px;height:30px;align-items:center;justify-content:center;cursor:pointer;font-size:14px;
+  }
+
+  .chan-stream{flex:1;overflow-y:auto;padding:14px 0 8px;scroll-behavior:smooth;}
+  .chan-day{display:flex;align-items:center;gap:10px;margin:6px 18px 10px;}
+  .chan-day::before,.chan-day::after{content:'';flex:1;height:1px;background:var(--border);}
+  .chan-day span{font-size:11px;color:var(--text-muted);white-space:nowrap;}
+
+  /* 消息：头像一列 + 内容一列，底部一行放时间和操作图标（都随文档流，不浮动） */
+  .chan-msg{
+    display:grid;grid-template-columns:40px minmax(0,1fr);column-gap:12px;
+    padding:16px 18px 10px;transition:background .15s;
+  }
+  .chan-msg:hover{background:#fbfbfc;}
+  .chan-msg + .chan-msg{box-shadow:inset 0 1px 0 #f4f4f5;}
+  .chan-msg-avwrap{line-height:0;}
+  .chan-msg-main{min-width:0;}
+  .chan-msg-meta{display:flex;align-items:center;gap:6px;flex-wrap:wrap;}
+  .chan-msg-name{font-size:13px;font-weight:600;color:#1f1f22;}
+  .chan-msg-badge{
+    font-size:10px;font-weight:600;color:var(--accent);background:var(--accent-light);
+    border-radius:3px;padding:1px 5px;line-height:1.4;
+  }
+  .chan-msg-quote{
+    font-size:11.5px;color:var(--text-muted);border-left:2px solid var(--border);
+    padding-left:6px;margin:4px 0 0;
+  }
+  .chan-msg-quote b{color:var(--accent);font-weight:600;}
+  .chan-msg-text{
+    font-size:14px;line-height:1.75;color:#333;
+    white-space:pre-wrap;word-break:break-word;margin-top:3px;
+  }
+  .chan-msg--op .chan-msg-text{color:#232326;}
+  .chan-imgs{display:flex;flex-wrap:wrap;gap:8px;margin-top:8px;}
+  .chan-imgs img{
+    width:180px;height:180px;object-fit:cover;border-radius:8px;
+    border:1px solid var(--border);cursor:zoom-in;transition:transform .15s;
+    background:#f2f2f4;
+  }
+  .chan-imgs img:hover{transform:scale(1.02);}
+
+  /* 底部：时间在左（与头像左缘对齐），点赞/评论图标在右 */
+  .chan-msg-foot{
+    grid-column:1 / -1;display:flex;align-items:center;justify-content:space-between;
+    margin-top:6px;min-height:24px;
+  }
+  .chan-msg-time{font-size:11px;color:#a9a9b0;}
+  .chan-msg-actions{display:flex;align-items:center;gap:16px;}
+  .chan-msg-actions button{
+    border:none;background:none;cursor:pointer;font-family:var(--font-sans);
+    display:inline-flex;align-items:center;gap:4px;font-size:12px;color:#9a9aa2;
+    padding:3px 6px;border-radius:5px;transition:color .12s,background .12s;
+  }
+  .chan-msg-actions button:hover{color:var(--accent);background:var(--accent-light);}
+  .chan-msg-actions button.liked{color:var(--accent);font-weight:600;}
+  .chan-msg-actions svg{display:block;}
+  @media (max-width:760px){
+    .chan-msg{grid-template-columns:34px minmax(0,1fr);column-gap:10px;padding:14px 14px 8px;}
+    .chan-msg-actions{gap:12px;}
+    .chan-imgs img{width:132px;height:132px;}
+  }
+  .chan-empty{
+    display:flex;flex-direction:column;align-items:center;justify-content:center;
+    height:100%;color:var(--text-muted);font-size:13px;gap:8px;padding:40px;text-align:center;
+  }
+  .chan-empty .big{font-size:34px;}
+
+  /* --- 输入区 --- */
+  .chan-composer{border-top:1px solid var(--border);padding:10px 16px 12px;flex-shrink:0;background:#fff;}
+  .chan-reply-chip{
+    display:inline-flex;align-items:center;gap:6px;font-size:11.5px;color:var(--accent);
+    background:var(--accent-light);border-radius:6px;padding:3px 8px;margin-bottom:6px;
+  }
+  .chan-reply-chip span[role=cancel]{cursor:pointer;font-size:13px;line-height:1;opacity:.7;}
+  .chan-input-wrap{display:flex;flex-direction:column;gap:6px;}
+  .chan-input-wrap textarea{
+    width:100%;border:none;outline:none;resize:none;font-family:var(--font-sans);
+    font-size:13.5px;line-height:1.6;color:var(--text);max-height:120px;
+    padding:4px 2px;background:transparent;
+  }
+  .chan-composer-bar{display:flex;align-items:center;gap:8px;margin-top:2px;}
+  .chan-tool{
+    border:1px solid var(--border);background:#fff;border-radius:7px;cursor:pointer;
+    width:30px;height:28px;font-size:14px;line-height:1;
+    display:inline-flex;align-items:center;justify-content:center;color:var(--text-light);
+  }
+  .chan-tool:hover{border-color:var(--accent);color:var(--accent);}
+  .chan-icon-btn svg{display:block;}
+  .chan-stream::-webkit-scrollbar,.chan-topic-list::-webkit-scrollbar,.chan-members-list::-webkit-scrollbar{width:6px;}
+  .chan-stream::-webkit-scrollbar-thumb,.chan-topic-list::-webkit-scrollbar-thumb,.chan-members-list::-webkit-scrollbar-thumb{background:#dcdce4;border-radius:3px;}
+  .chan-stream::-webkit-scrollbar-track,.chan-topic-list::-webkit-scrollbar-track,.chan-members-list::-webkit-scrollbar-track{background:transparent;}
+  .chan-end{text-align:center;font-size:11px;color:#c4c4cc;padding:16px 0 8px;letter-spacing:.05em;}
+  .chan-hint{font-size:11px;color:var(--text-muted);margin-left:2px;}
+  .chan-send{
+    margin-left:auto;border:none;background:var(--accent);color:#fff;border-radius:7px;
+    padding:6px 16px;font-size:13px;font-weight:600;cursor:pointer;font-family:var(--font-sans);
+    transition:background var(--transition);
+  }
+  .chan-send:hover{background:var(--accent-hover);}
+  .chan-send:disabled{opacity:.6;cursor:default;}
+  .chan-composer.is-off .chan-input-wrap textarea,.chan-composer.is-off .chan-tool{opacity:.5;pointer-events:none;}
+
+  /* --- 右栏：成员 --- */
+  .chan-members{
+    border-left:1px solid var(--border);background:#fbfbfc;
+    display:flex;flex-direction:column;min-height:0;
+  }
+  .chan-members-head{
+    padding:14px 14px 8px;font-size:11px;font-weight:600;color:var(--text-muted);letter-spacing:.04em;
+  }
+  .chan-members-list{flex:1;overflow-y:auto;padding:0 8px 12px;}
+  .chan-member{display:flex;align-items:center;gap:8px;padding:6px 8px;border-radius:8px;}
+  .chan-member:hover{background:#f0f0f4;}
+  .chan-member .meta{min-width:0;flex:1;}
+  .chan-member .nm{font-size:12.5px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  .chan-member .sub{font-size:10.5px;color:var(--text-muted);}
+
+  /* 移动端 */
+  .chan-drawer-btn{
+    display:none;border:1px solid var(--border);background:#fff;border-radius:8px;
+    width:32px;height:30px;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0;
+  }
+  .chan-backdrop{display:none;}
+  @media (max-width:1000px){
+    .chan-app{grid-template-columns:250px minmax(0,1fr);}
+    .chan-members{
+      display:none;position:absolute;right:0;top:0;bottom:0;width:216px;z-index:28;
+      box-shadow:-8px 0 24px rgba(0,0,0,.12);
+    }
+    .chan-members.show{display:flex;}
+    .chan-icon-btn{display:inline-flex;}
+  }
+  @media (max-width:760px){
+    .chan-app{grid-template-columns:1fr;height:calc(100vh - var(--header-height) - 32px);min-height:480px;}
+    .chan-rail{
+      position:absolute;left:0;top:0;bottom:0;width:268px;z-index:30;
+      transform:translateX(-101%);transition:transform .25s ease;
+    }
+    .chan-rail.open{transform:translateX(0);box-shadow:0 0 30px rgba(0,0,0,.2);}
+    .chan-backdrop{
+      display:block;position:absolute;inset:0;background:rgba(0,0,0,.25);z-index:29;opacity:0;
+      pointer-events:none;transition:opacity .25s;
+    }
+    .chan-backdrop.show{opacity:1;pointer-events:auto;}
+    .chan-drawer-btn{display:inline-flex;}
+    .chan-hint{display:none;}
+    .chan-head{padding:10px 12px;}
+    .chan-msg{padding:8px 12px;}
+    .chan-imgs img{width:110px;height:110px;}
+  }
+  </style>
 </head>
 <body>
 
 <header class="site-header">
   <div class="header-inner">
     <a href="index.html" class="logo">
-      <img src="images/logo.jpg" alt="东方动漫社" class="logo-img">
+      <img src="images/logo.webp" alt="东方动漫社" class="logo-img">
       东方动漫社
     </a>
     <nav class="nav-links">
@@ -28,7 +277,7 @@
     <div class="header-auth" id="headerAuth"></div>
     <div class="social-links">
       <a href="https://space.bilibili.com/322448790" target="_blank" title="B站" aria-label="Bilibili">
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M17.813 4.653h.854c1.51.054 2.769.578 3.773 1.574 1.004.995 1.524 2.249 1.56 3.76v7.36c-.036 1.51-.556 2.769-1.56 3.773s-2.262 1.524-3.773 1.56H5.333c-1.51-.036-2.769-.556-3.773-1.56S.036 18.858 0 17.347v-7.36c.036-1.511.556-2.765 1.56-3.76 1.004-.996 2.262-1.52 3.773-1.574h.774l-1.174-1.12a1.234 1.234 0 0 1-.373-.906c0-.356.124-.658.373-.907l.027-.027c.267-.249.573-.373.92-.373.347 0 .653.124.92.373L9.653 4.44c.071.071.134.142.187.213h4.267a.836.836 0 0 1 .16-.213l2.853-2.747c.267-.249.573-.373.92-.373.347 0 .662.151.929.4.267.249.391.551.391.907 0 .355-.124.657-.373.906l-1.174 1.12zM5.333 7.24c-.746.018-1.373.276-1.88.773-.506.498-.769 1.13-.786 1.894v7.52c.017.764.28 1.395.786 1.893.507.498 1.134.756 1.88.773h13.334c.746-.017 1.373-.275 1.88-.773.506-.498.769-1.129.786-1.893v-7.52c-.017-.765-.28-1.396-.786-1.894-.507-.497-1.134-.755-1.88-.773H5.333zM8 11.107c.356 0 .658.124.907.373l.08.08c.231.267.346.56.346.88v3.2c0 .356-.115.658-.347.907-.249.249-.551.373-.906.373-.356 0-.658-.124-.907-.373l-.08-.08c-.231-.267-.347-.56-.347-.88v-3.2c0-.356.116-.658.347-.907.249-.249.551-.373.907-.373zm8 0c.356 0 .658.124.907.373l.08.08c.231.267.347.56.347.88v3.2c0 .356-.116.658-.347.907-.249.249-.551.373-.907.373-.356 0-.658-.124-.907-.373l-.08-.08c-.231-.267-.347-.56-.347-.88v-3.2c0-.356.116-.658.347-.907.249-.249.551-.373.907-.373z"/></svg>
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M17.813 4.653h.854c1.51.054 2.769.578 3.773 1.574 1.004.995 1.524 2.249 1.56 3.76v7.36c-.036 1.51-.556 2.769-1.56 3.773s-2.262 1.524-3.773 1.56H5.333c-1.51-.036-2.769-.556-3.773-1.56S.036 18.858 0 17.347v-7.36c.036-1.511.556-2.765 1.56-3.76 1.004-.996 2.262-1.52 3.773-1.574h.774l-1.174-1.12a1.234 1.234 0 0 1-.373-.906c0-.356.124-.658.373-.907l.027-.027c.267-.249.573-.373.92-.373.347 0 .653.124.92.373L9.653 4.44c.071.071.134.142.187.213h4.267a.836.836 0 0 1 .16-.213l2.853-2.747c.267-.249.573-.373.92-.373.347 0 .662.151.929.4.267.249.391.551.391.907 0 .355-.124.657-.373.906l-1.174 1.12zM5.333 7.24c-.746.018-1.373.276-1.88.773-.506.498-.769 1.13-.786 1.894v7.52c.017.764.28 1.395.786 1.893.507.498 1.134.756 1.88.773h13.334c.746-.017 1.373-.275 1.88-.773.506-.498.769-1.129.786-1.893v-7.52c-.017-.765-.28-1.396-.786-1.894-.507-.497-1.134-.755-1.88-.773H5.333zM8 11.107c.356 0 .658.124.907.373l.08.08c.231.267.346.56.346.88v3.2c0 .356-.115.658-.347.907-.249.249-.551.373-.906.373-.356 0-.658-.124-.907-.373l-.08-.08c-.231-.267-.347-.56-.347-.88v-3.2c0-.356.116-.658.347-.907.249-.249.551-.373.907-.373zm8 0c.356 0 .658.124.907.373l.08.08c.231.267.347.56.347.88v3.2c0-.356-.116-.658-.347-.907-.249-.249-.551-.373-.907-.373z"/></svg>
       </a>
       <a href="#" title="QQ群" aria-label="QQ Group">
         <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M21.395 15.035a39.548 39.548 0 0 0-.803-2.264l-1.079-2.695c.001-.032.014-.562.014-.836C19.527 4.661 17.335 2.418 12 2.418s-7.527 2.243-7.527 6.822c0 .274.013.804.014.836l-1.08 2.695a38.97 38.97 0 0 0-.802 2.264c-1.021 3.283-1.045 4.17-.065 4.547 1.635.628 3.986-.504 5.277-1.064 1.806.45 3.871.563 6.183.563 2.312 0 4.377-.113 6.183-.563 1.291.56 3.642 1.692 5.277 1.064.98-.377.956-1.264-.065-4.547z"/></svg>
@@ -53,61 +302,110 @@
 <div class="page-wrapper" style="grid-template-columns: 1fr;">
   <main class="main-content">
 
-    <div class="page-header">
-      <div class="breadcrumb"><a href="index.html">首页</a><span>/</span>留言板</div>
-      <h1>留言板</h1>
-      <p style="color:var(--text-muted);font-size:13px;margin-top:4px;">请在该板块留下你对社团的建议与疑问，我们会一一解决~</p>
-    </div>
+    <div class="chan-app">
 
-    <!-- New Thread Form -->
-    <div class="comment-section" style="margin-bottom:16px;">
-      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">
-        <h3 style="font-size:16px;font-weight:600;">社员论坛</h3>
-        <button class="btn btn-primary" id="btnNewThread" style="font-size:13px;">+ 发帖</button>
-      </div>
-      <form class="comment-form" id="threadForm" style="display:none;">
-        <input type="text" id="threadTitle" placeholder="帖子标题" maxlength="60" style="width:100%;padding:10px 14px;border:1px solid var(--border);border-radius:8px;font-size:14px;margin-bottom:10px;outline:none;">
-        <div class="gb-upload-area" style="margin-bottom:10px;">
-          <div class="img-upload-area" id="threadImgTrigger" style="padding:16px;">
-            <div style="font-size:22px;">🖼️</div>
-            <p style="font-size:12px;color:var(--text-muted);">点击上传图片（可选，支持多张）</p>
-            <input type="file" id="threadImages" accept="image/*" multiple style="display:none;">
+      <!-- ============ 左栏：话题 ============ -->
+      <aside class="chan-rail" id="chanRail">
+        <div class="chan-guild">
+          <div class="chan-guild-icon">东</div>
+          <div style="min-width:0;">
+            <div class="chan-guild-name">东方的留言板</div>
+            <div class="chan-guild-sub">东方动漫社 · 校内广场</div>
           </div>
-          <div class="img-previews" id="threadImgPreviews"></div>
         </div>
-        <textarea id="threadText" placeholder="帖子内容..." required style="min-height:100px;"></textarea>
-        <div style="display:flex;gap:8px;margin-top:8px;justify-content:flex-end;">
-          <button type="button" class="btn btn-outline" id="btnCancelThread" style="font-size:13px;">取消</button>
-          <button type="submit" class="btn btn-primary" style="font-size:13px;">发布帖子</button>
+        <div class="chan-search">
+          <input type="text" id="gbSearch" placeholder="搜索话题…" autocomplete="off">
         </div>
-      </form>
-    </div>
+        <div class="chan-rail-label"><span>话题</span><span id="gbTopicCount">0</span></div>
+        <div class="chan-topic-list" id="threadList">
+          <p style="padding:16px 10px;font-size:12px;color:var(--text-muted);">加载中…</p>
+        </div>
+        <div class="chan-rail-foot">
+          <button class="chan-new-btn" id="btnNewThread">＋ 发起话题</button>
+        </div>
+      </aside>
+      <div class="chan-backdrop" id="chanBackdrop"></div>
 
-    <!-- Thread List -->
-    <div id="threadList">
-      <p style="text-align:center;padding:24px;color:var(--text-muted);">加载中...</p>
-    </div>
+      <!-- ============ 中栏：消息流 ============ -->
+      <section class="chan-main">
+        <header class="chan-head">
+          <button class="chan-drawer-btn" id="chanDrawerBtn" aria-label="话题列表">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+          </button>
+          <span class="chan-head-hash">#</span>
+          <div style="min-width:0;">
+            <div class="chan-head-title" id="chanTopicTitle">留言板</div>
+            <div class="chan-head-meta" id="chanTopicMeta">选择一个话题开始聊天</div>
+          </div>
+          <div class="chan-head-right">
+            <button class="chan-like" id="chanLikeBtn" title="点赞话题" style="display:none;">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
+              <span id="chanLikeCount">0</span>
+            </button>
+            <button class="chan-icon-btn" id="chanMembersBtn" title="成员">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+            </button>
+          </div>
+        </header>
 
-    <!-- Thread Detail Modal -->
-    <div class="modal-overlay" id="threadModal">
-      <div class="modal" style="max-width:680px;max-height:90vh;">
-        <button class="modal-close">&times;</button>
-        <div id="threadDetail"></div>
-        <div style="border-top:1px solid var(--border);padding-top:16px;margin-top:16px;">
-          <h4 style="font-size:14px;font-weight:600;margin-bottom:10px;">回复</h4>
-          <form id="replyForm" style="display:flex;flex-direction:column;gap:8px;">
-            <div class="gb-upload-area" style="margin-bottom:8px;">
-              <div class="img-upload-area" id="replyImgTrigger" style="padding:10px;">
-                <div style="font-size:18px;">🖼️</div>
-                <p style="font-size:11px;color:var(--text-muted);">点击上传图片（可选，仅一张）</p>
-                <input type="file" id="replyImage" accept="image/*" style="display:none;">
-              </div>
+        <div class="chan-stream" id="chanStream">
+          <div class="chan-empty">
+            <div class="big">💬</div>
+            <div>左侧选一个话题，或者点「发起话题」开聊</div>
+          </div>
+        </div>
+
+        <div class="chan-composer is-off" id="chanComposer">
+          <form id="replyForm" style="margin:0;">
+            <div class="chan-reply-chip" id="chanReplyChip" style="display:none;"></div>
+            <div class="chan-input-wrap">
+              <textarea id="replyText" rows="1" placeholder="说点什么…" required></textarea>
               <div class="img-previews" id="replyImgPreview"></div>
             </div>
-            <textarea id="replyText" placeholder="写下你的回复..." required style="min-height:80px;width:100%;padding:10px;border:1px solid var(--border);border-radius:8px;font-size:14px;resize:vertical;outline:none;font-family:var(--font-sans);"></textarea>
-            <button type="submit" class="btn btn-primary" style="align-self:flex-end;font-size:13px;">回复</button>
+            <div class="chan-composer-bar">
+              <button type="button" class="chan-tool" id="replyImgTrigger" title="添加图片">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="m21 15-5-5L5 21"/></svg>
+              </button>
+              <input type="file" id="replyImage" accept="image/*" style="display:none;">
+              <span class="chan-hint">Enter 发送 · Shift+Enter 换行</span>
+              <button type="submit" class="chan-send" id="chanSendBtn">发送</button>
+            </div>
           </form>
         </div>
+      </section>
+
+      <!-- ============ 右栏：成员 ============ -->
+      <aside class="chan-members" id="chanMembers">
+        <div class="chan-members-head" id="chanMembersHead">成员</div>
+        <div class="chan-members-list" id="chanMembersList"></div>
+      </aside>
+
+    </div>
+
+    <!-- 发起话题 -->
+    <div class="modal-overlay" id="newTopicModal">
+      <div class="modal" style="max-width:600px;">
+        <button class="modal-close" type="button">&times;</button>
+        <h3 style="font-size:17px;font-weight:700;margin-bottom:4px;">发起话题</h3>
+        <p style="font-size:12px;color:var(--text-muted);margin-bottom:14px;">起个标题，把想说的写下来~</p>
+        <form id="threadForm" style="display:flex;flex-direction:column;gap:10px;">
+          <input type="text" id="threadTitle" placeholder="话题标题（60 字以内）" maxlength="60"
+                 style="width:100%;padding:10px 14px;border:1px solid var(--border);border-radius:8px;font-size:14px;outline:none;font-family:var(--font-sans);">
+          <div>
+            <div class="img-upload-area" id="threadImgTrigger" style="padding:14px;">
+              <div style="color:var(--text-muted);"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="m21 15-5-5L5 21"/></svg></div>
+              <p style="font-size:12px;color:var(--text-muted);">点击上传图片（可选，支持多张）</p>
+              <input type="file" id="threadImages" accept="image/*" multiple style="display:none;">
+            </div>
+            <div class="img-previews" id="threadImgPreviews"></div>
+          </div>
+          <textarea id="threadText" placeholder="话题内容…" required
+                    style="min-height:120px;width:100%;padding:10px 14px;border:1px solid var(--border);border-radius:8px;font-size:14px;resize:vertical;outline:none;font-family:var(--font-sans);line-height:1.6;"></textarea>
+          <div style="display:flex;gap:8px;justify-content:flex-end;">
+            <button type="button" class="btn btn-outline" id="btnCancelThread" style="font-size:13px;">取消</button>
+            <button type="submit" class="btn btn-primary" style="font-size:13px;">发布话题</button>
+          </div>
+        </form>
       </div>
     </div>
 
@@ -122,6 +420,11 @@
       <span>总访问量：<strong id="totalVisits">--</strong></span>
     </div>
     <p>&copy; 2026 东方动漫社 · 神秘据点 | Powered by Love &amp; ACG</p>
+    <div class="footer-beian">
+      <span>制作人：浅 —— <a href="contact.html">联系制作人</a></span>
+      <a href="https://beian.miit.gov.cn/" target="_blank" rel="noreferrer">鄂ICP备2026040004号-1</a>
+      <a href="https://beian.mps.gov.cn/#/query/webSearch?code=42030002420406" target="_blank" rel="noreferrer">鄂公网安备42030002420406号</a>
+    </div>
   </div>
 </footer>
 
@@ -133,137 +436,217 @@
   <button class="close-btn">&times;</button>
   <img src="" alt="查看大图">
 </div>
+<script src="js/imgcompress.js"></script>
 <script src="js/main.js"></script>
 <script>
-function esc(str) {
+var esc = function(str) {
   var d = document.createElement('div');
-  d.textContent = str || '';
+  d.textContent = str == null ? '' : String(str);
   return d.innerHTML;
-}
+};
 
 var avatarColors = ['#fce4ec,#e8eaf6', '#e8f5e9,#fff3e0', '#e3f2fd,#f3e5f5', '#fff3e0,#fce4ec', '#f3e5f5,#e8eaf6', '#e0f7fa,#fff9c4'];
 
 var threadImages = [];
 var replyImage = null;
-
-// Thread image upload
-var threadImgInput = document.getElementById('threadImages');
-var threadImgPrev = document.getElementById('threadImgPreviews');
-if (threadImgInput && threadImgPrev) {
-  document.getElementById('threadImgTrigger').addEventListener('click', function() { threadImgInput.click(); });
-  threadImgInput.addEventListener('change', function() {
-    Array.from(threadImgInput.files).forEach(function(f) {
-      var r = new FileReader();
-      r.onload = function() { threadImages.push(r.result); renderThreadImgs(); };
-      r.readAsDataURL(f);
-    });
-    threadImgInput.value = '';
-  });
-}
-function renderThreadImgs() {
-  threadImgPrev.innerHTML = threadImages.map(function(s, i) {
-    return '<div class="img-preview-item"><img src="' + s + '"><button class="remove-img" data-idx="' + i + '">&times;</button></div>';
-  }).join('');
-  threadImgPrev.querySelectorAll('.remove-img').forEach(function(b) {
-    b.addEventListener('click', function(e) { e.stopPropagation(); threadImages.splice(parseInt(this.dataset.idx), 1); renderThreadImgs(); });
-  });
-}
-
-// Reply image upload (single)
-var replyImgInput = document.getElementById('replyImage');
-var replyImgPrev = document.getElementById('replyImgPreview');
-if (replyImgInput && replyImgPrev) {
-  document.getElementById('replyImgTrigger').addEventListener('click', function() { replyImgInput.click(); });
-  replyImgInput.addEventListener('change', function() {
-    if (replyImgInput.files.length > 0) {
-      var f = replyImgInput.files[0];
-      var r = new FileReader();
-      r.onload = function() { replyImage = r.result; renderReplyImg(); };
-      r.readAsDataURL(f);
-    }
-    replyImgInput.value = '';
-  });
-}
-function renderReplyImg() {
-  if (replyImage) {
-    replyImgPrev.innerHTML = '<div class="img-preview-item"><img src="' + replyImage + '"><button class="remove-img" id="removeReplyImg">&times;</button></div>';
-    document.getElementById('removeReplyImg').addEventListener('click', function(e) { e.stopPropagation(); replyImage = null; replyImgPrev.innerHTML = ''; });
-  } else {
-    replyImgPrev.innerHTML = '';
-  }
-}
-
 var allMessagesCache = [];
+var currentTopicId = null;
+var currentFilter = '';
 
-function loadThreads() {
-  return API.get('/api/guestbook').then(function(data) {
-    if (!Array.isArray(data)) {
-      console.error('guestbook data not array:', data);
-      var list = document.getElementById('threadList');
-      if (list) list.innerHTML = '<p style="text-align:center;padding:24px;color:#c62828;">数据异常，请刷新重试~</p>';
-      return;
-    }
-    allMessagesCache = data;
-    var threads = data.filter(function(m) { return !m.parent_id; });
-    var list = document.getElementById('threadList');
-    if (!list) return;
-    if (threads.length === 0) {
-      list.innerHTML = '<div class="comment-section" style="text-align:center;padding:32px;color:var(--text-muted);">暂无帖子，来说点什么吧~</div>';
-      return;
-    }
-    list.innerHTML = threads.map(function(t) {
-      var replyCount = data.filter(function(m) { return m.parent_id === t.id; }).length;
-      var avatarStyle = 'background:linear-gradient(135deg,' + avatarColors[(t.author_id || 0) % avatarColors.length] + ');';
-      var threadAvatarHTML = t.avatar
-        ? '<img src="' + esc(t.avatar) + '" style="width:40px;height:40px;border-radius:50%;object-fit:cover;flex-shrink:0;">'
-        : '<div class="avatar" style="' + avatarStyle + ';flex-shrink:0;">' + esc((t.author_name || '?').charAt(0)) + '</div>';
-      return '<div class="thread-card" style="background:var(--bg-card);border:1px solid var(--border);border-radius:10px;padding:18px 20px;margin-bottom:12px;cursor:pointer;transition:all 0.2s;" data-id="' + t.id + '">' +
-        '<div style="display:flex;align-items:flex-start;gap:14px;">' +
-        threadAvatarHTML +
-        '<div style="flex:1;min-width:0;">' +
-        '<h4 style="font-size:15px;font-weight:600;margin-bottom:4px;">' + esc(t.title || '无标题') + '</h4>' +
-        '<p style="font-size:13px;color:var(--text-light);display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;margin-bottom:8px;">' + esc(t.text || '') + '</p>' +
-        '<div style="display:flex;gap:16px;font-size:12px;color:var(--text-muted);align-items:center;">' +
-        '<span>' + esc(t.author_name || '匿名') + '</span>' + (typeof titleBadge==='function' ? titleBadge(t.author_title) : '') + '<span>' + t.created_at + '</span>' +
-        '<span style="color:var(--accent);font-weight:500;">' + replyCount + ' 回复</span>' +
-        (t.images && t.images.length > 0 ? '<span style="margin-left:auto;font-size:20px;flex-shrink:0;" title="' + t.images.length + '张图片">🖼️</span>' : '') +
-        '<button class="like-btn" data-post="' + t.id + '" style="margin-left:auto;"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg><span class="count">' + (t.likes || 0) + '</span></button>' +
-        '</div></div></div></div>';
-    }).join('');
+/* ---------- 小店：工具 ---------- */
+function avatarHTML(m, size) {
+  var s = size || 38;
+  if (m.avatar) {
+    return '<img src="' + esc(m.avatar) + '" class="chan-msg-av" style="width:' + s + 'px;height:' + s + 'px;border-radius:50%;object-fit:cover;display:block;">';
+  }
+  var grad = avatarColors[(m.author_id || 0) % avatarColors.length];
+  return '<div class="chan-msg-av" style="width:' + s + 'px;height:' + s + 'px;border-radius:50%;' +
+    'background:linear-gradient(135deg,' + grad + ');color:#555;display:flex;align-items:center;' +
+    'justify-content:center;font-size:' + Math.round(s * 0.4) + 'px;font-weight:600;">' +
+    esc((m.author_name || '?').charAt(0)) + '</div>';
+}
 
-    list.querySelectorAll('.thread-card').forEach(function(card) {
-      card.addEventListener('mouseenter', function() { this.style.boxShadow = '0 2px 12px rgba(0,0,0,0.06)'; });
-      card.addEventListener('mouseleave', function() { this.style.boxShadow = 'none'; });
-      card.addEventListener('click', function() { openThread(parseInt(this.dataset.id)); });
+function fmtTime(s) {
+  if (!s) return '';
+  var d = new Date(s);
+  if (isNaN(d.getTime())) return String(s);
+  var now = new Date();
+  var hh = ('0' + d.getHours()).slice(-2), mm = ('0' + d.getMinutes()).slice(-2);
+  var sameDay = d.getFullYear() === now.getFullYear() && d.getMonth() === now.getMonth() && d.getDate() === now.getDate();
+  var yest = new Date(now.getTime() - 86400000);
+  var isYest = d.getFullYear() === yest.getFullYear() && d.getMonth() === yest.getMonth() && d.getDate() === yest.getDate();
+  if (sameDay) return '今天 ' + hh + ':' + mm;
+  if (isYest) return '昨天 ' + hh + ':' + mm;
+  var md = ('0' + (d.getMonth() + 1)).slice(-2) + '-' + ('0' + d.getDate()).slice(-2);
+  if (d.getFullYear() === now.getFullYear()) return md + ' ' + hh + ':' + mm;
+  return d.getFullYear() + '-' + md + ' ' + hh + ':' + mm;
+}
+
+function dayKey(s) {
+  var d = new Date(s);
+  if (isNaN(d.getTime())) return String(s || '');
+  return d.getFullYear() + '年' + (d.getMonth() + 1) + '月' + d.getDate() + '日';
+}
+
+function imgTag(src, cls) {
+  return '<img src="' + esc(src) + '" class="' + (cls || '') + '" onclick="viewImage(this.src);event.stopPropagation();">';
+}
+
+var HEART_PATH = 'M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z';
+function heartSVG(liked, size) {
+  var s = size || 12;
+  return '<svg viewBox="0 0 24 24" width="' + s + '" height="' + s + '" fill="' + (liked ? 'currentColor' : 'none') +
+    '" stroke="currentColor" stroke-width="2" style="display:block;"><path d="' + HEART_PATH + '"/></svg>';
+}
+function likeBtnInner(liked, n) {
+  return heartSVG(liked, 13) + '<span>' + (n || 0) + '</span>';
+}
+var cmtSVG = '<svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8z"/></svg>';
+
+window.viewImage = function(src) {
+  var lb = document.getElementById('lightbox');
+  if (!lb) return;
+  var img = lb.querySelector('img');
+  if (img) img.src = src;
+  lb.classList.add('open');
+};
+
+/* ---------- 左栏渲染 ---------- */
+function renderTopicList() {
+  var list = document.getElementById('threadList');
+  if (!list) return;
+  var threads = allMessagesCache.filter(function(m) { return !m.parent_id; });
+  document.getElementById('gbTopicCount').textContent = threads.length;
+  if (currentFilter) {
+    var kw = currentFilter.toLowerCase();
+    threads = threads.filter(function(t) {
+      return (t.title || '').toLowerCase().indexOf(kw) >= 0 || (t.text || '').toLowerCase().indexOf(kw) >= 0;
     });
-    // Like button in thread cards
-    list.querySelectorAll('.like-btn').forEach(function(btn) {
-      btn.addEventListener('click', function(e) {
-        e.stopPropagation();
-        if (!API.token) { openAuthModal('login'); return; }
-        var postId = this.dataset.post;
-        var self = this;
-        self.classList.add('bounce');
-        setTimeout(function() { self.classList.remove('bounce'); }, 400);
-        API.post('/api/guestbook/' + postId + '/like').then(function(d) {
-          if (d.error) return;
-          self.querySelector('.count').textContent = d.likes;
-          if (d.liked) self.classList.add('liked'); else self.classList.remove('liked');
-        });
+  }
+  if (threads.length === 0) {
+    list.innerHTML = '<p style="padding:16px 10px;font-size:12px;color:var(--text-muted);">' +
+      (currentFilter ? '没找到相关话题' : '还没有话题，来发第一个吧~') + '</p>';
+    return;
+  }
+  list.innerHTML = threads.map(function(t) {
+    var replyCount = allMessagesCache.filter(function(m) { return m.parent_id === t.id; }).length;
+    var active = t.id === currentTopicId ? ' active' : '';
+    return '<div class="chan-topic' + active + '" data-id="' + t.id + '">' +
+      '<span class="chan-topic-hash">#</span>' +
+      '<div class="chan-topic-body">' +
+        '<div class="chan-topic-title">' + esc(t.title || '无标题') + '</div>' +
+        '<div class="chan-topic-sub"><b>' + replyCount + '</b> 回复 · ' + esc(fmtTime(t.created_at)) + '</div>' +
+      '</div></div>';
+  }).join('');
+  list.querySelectorAll('.chan-topic').forEach(function(el) {
+    el.addEventListener('click', function() { openThread(parseInt(this.dataset.id)); });
+  });
+}
+
+/* ---------- 成员栏 ---------- */
+function renderMembers(topic, replies) {
+  var head = document.getElementById('chanMembersHead');
+  var box = document.getElementById('chanMembersList');
+  var map = {}, order = [];
+  function add(m) {
+    var key = m.author_id != null ? 'u' + m.author_id : 'n' + (m.author_name || '匿名');
+    if (!map[key]) { map[key] = { m: m, n: 0 }; order.push(key); }
+    map[key].n++;
+  }
+  if (topic) add(topic);
+  (replies || []).forEach(add);
+  head.textContent = '成员 — ' + order.length;
+  if (order.length === 0) { box.innerHTML = ''; return; }
+  box.innerHTML = order.map(function(k, i) {
+    var it = map[k], m = it.m;
+    var isOp = topic && m.author_id === topic.author_id && m.author_name === topic.author_name;
+    return '<div class="chan-member">' + avatarHTML(m, 26) +
+      '<div class="meta"><div class="nm">' + esc(m.author_name || '匿名') +
+      (isOp ? ' <span class="chan-msg-badge">楼主</span>' : '') + '</div>' +
+      '<div class="sub">' + it.n + ' 条发言</div></div></div>';
+  }).join('');
+}
+
+/* ---------- 消息流渲染 ---------- */
+function renderStream(topic, replies) {
+  var stream = document.getElementById('chanStream');
+  var msgs = [topic].concat(replies);
+  var html = '';
+  var lastDay = null;
+  /* 每条消息的子回复数，用于底部评论图标的数字 */
+  var kids = {};
+  replies.forEach(function(m) {
+    if (m.parent_id) kids[m.parent_id] = (kids[m.parent_id] || 0) + 1;
+  });
+  msgs.forEach(function(m, idx) {
+    var dk = dayKey(m.created_at);
+    if (dk !== lastDay) {
+      html += '<div class="chan-day"><span>' + esc(dk) + '</span></div>';
+      lastDay = dk;
+    }
+    var isOp = idx === 0;
+    var quote = '';
+    if (!isOp && m.parent_id && m.parent_id !== topic.id) {
+      var parent = allMessagesCache.find(function(x) { return x.id === m.parent_id; });
+      if (parent) quote = '<div class="chan-msg-quote">↳ 回复 <b>@' + esc(parent.author_name || '匿名') + '</b></div>';
+    }
+    var imgs = '';
+    if (m.images && m.images.length) {
+      imgs = '<div class="chan-imgs">' + m.images.map(function(src) { return imgTag(src); }).join('') + '</div>';
+    }
+    html += '<div class="chan-msg' + (isOp ? ' chan-msg--op' : '') + '" data-id="' + m.id + '">' +
+      '<div class="chan-msg-avwrap">' + avatarHTML(m, 40) + '</div>' +
+      '<div class="chan-msg-main">' +
+        '<div class="chan-msg-meta">' +
+          '<span class="chan-msg-name">' + esc(m.author_name || '匿名') + '</span>' +
+          (isOp ? '<span class="chan-msg-badge">楼主</span>' : '') +
+        '</div>' +
+        quote +
+        (m.text ? '<div class="chan-msg-text">' + esc(m.text) + '</div>' : '') +
+        imgs +
+      '</div>' +
+      '<div class="chan-msg-foot">' +
+        '<span class="chan-msg-time">' + esc(fmtTime(m.created_at)) + '</span>' +
+        '<span class="chan-msg-actions">' +
+          '<button class="act-like' + (m.liked ? ' liked' : '') + '" data-id="' + m.id + '" title="点赞">' + likeBtnInner(m.liked, m.likes) + '</button>' +
+          '<button class="act-reply" data-id="' + m.id + '" data-author="' + esc(m.author_name || '匿名') + '" title="回复">' +
+            cmtSVG + '<span>' + (kids[m.id] || 0) + '</span></button>' +
+        '</span>' +
+      '</div>' +
+    '</div>';
+  });
+  html += '<div class="chan-end">—— 已经到底啦 ——</div>';
+  stream.innerHTML = html;
+
+  stream.querySelectorAll('.act-reply').forEach(function(btn) {
+    btn.addEventListener('click', function(e) {
+      e.stopPropagation();
+      if (!API.token) { openAuthModal('login'); return; }
+      setReplyTarget(parseInt(this.dataset.id), this.dataset.author);
+    });
+  });
+  stream.querySelectorAll('.act-like').forEach(function(btn) {
+    btn.addEventListener('click', function(e) {
+      e.stopPropagation();
+      if (!API.token) { openAuthModal('login'); return; }
+      var id = this.dataset.id;
+      API.post('/api/guestbook/' + id + '/like').then(function(d) {
+        if (!d || d.error) return;
+        syncLikeUI(id, d.liked, d.likes);
       });
     });
   });
+  stream.scrollTop = stream.scrollHeight;
 }
 
-// Open thread detail in modal
+/* ---------- 打开话题 ---------- */
 function openThread(threadId) {
-  console.log('openThread called with:', threadId);
   var t = allMessagesCache.find(function(m) { return m.id === threadId; });
-  if (!t) { console.error('thread not found in cache'); return; }
-  // Collect all descendant replies recursively
-  var parentIds = [threadId];
-  var allReplies = [];
-  var found = true;
+  if (!t) { console.error('topic not found', threadId); return; }
+  currentTopicId = threadId;
+  window._currentTopicId = threadId;
+
+  var parentIds = [threadId], allReplies = [], found = true;
   while (found) {
     found = false;
     allMessagesCache.forEach(function(m) {
@@ -275,85 +658,144 @@ function openThread(threadId) {
     });
   }
   allReplies.sort(function(a, b) { return new Date(a.created_at) - new Date(b.created_at); });
-  var replies = allReplies;
-  var detail = document.getElementById('threadDetail');
-  if (!detail) { console.error('threadDetail not found'); return; }
-  detail.innerHTML = '<h2 style="font-size:18px;margin-bottom:4px;">' + esc(t.title || '无标题') + '</h2>' +
-    '<div style="font-size:12px;color:var(--text-muted);margin-bottom:12px;">' + esc(t.author_name || '匿名') + (typeof titleBadge==='function' ? titleBadge(t.author_title) : '') + ' · ' + t.created_at + '</div>' +
-    '<div style="font-size:14px;line-height:1.8;color:var(--text-light);white-space:pre-wrap;word-break:break-word;">' + esc(t.text) + '</div>' +
-    (t.images && t.images.length > 0 ? '<div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:12px;">' + t.images.map(function(img) { return '<img src="' + esc(img) + '" style="max-width:200px;max-height:200px;border-radius:8px;object-fit:cover;cursor:pointer;" onclick="event.stopPropagation();var lb=document.getElementById(\'lightbox\');if(lb){lb.classList.add(\'open\');lb.querySelector(\'img\').src=this.src;}">'; }).join('') + '</div>' : '') +
-    (allReplies.length > 0 ? '<div style="margin-top:20px;padding-top:16px;border-top:1px solid var(--border);"><h4 style="font-size:14px;font-weight:600;margin-bottom:10px;">评论（' + allReplies.length + '）</h4>' +
-      replies.map(function(r) {
-        var av = 'background:linear-gradient(135deg,' + avatarColors[(r.author_id || 0) % avatarColors.length] + ');';
-        var replyAvatarHTML = r.avatar
-          ? '<img src="' + esc(r.avatar) + '" style="width:32px;height:32px;border-radius:50%;object-fit:cover;flex-shrink:0;">'
-          : '<div class="avatar" style="' + av + ';width:32px;height:32px;font-size:14px;flex-shrink:0;">' + esc((r.author_name || '?').charAt(0)) + '</div>';
-        var isNested = r.parent_id !== threadId;
-        var parentReply = isNested ? allMessagesCache.find(function(m) { return m.id === r.parent_id; }) : null;
-        var replyToHTML = parentReply ? '<div style="font-size:11px;color:var(--accent);margin-bottom:2px;">↳ 回复 @' + esc(parentReply.author_name || '匿名') + '</div>' : '';
-        var indent = isNested ? 'margin-left:44px;' : '';
-        return '<div class="reply-item" style="display:flex;gap:10px;padding:10px 0;border-bottom:1px solid #f5f5f5;' + indent + '" data-reply-id="' + r.id + '" data-author="' + esc(r.author_name || '匿名') + '">' +
-          replyAvatarHTML +
-          '<div style="flex:1;"><div style="font-size:13px;font-weight:600;">' + esc(r.author_name || '匿名') + (typeof titleBadge==='function' ? titleBadge(r.author_title) : '') +
-          '<span style="font-weight:400;color:var(--text-muted);margin-left:8px;font-size:11px;">' + r.created_at + '</span></div>' +
-          replyToHTML +
-          '<div style="font-size:13px;color:var(--text-light);margin-top:2px;">' + esc(r.text) + '</div>' +
-          (r.images && r.images.length > 0 ? '<img src="' + esc(r.images[0]) + '" style="max-width:120px;max-height:120px;border-radius:6px;object-fit:cover;margin-top:6px;cursor:pointer;" onclick="event.stopPropagation();var lb=document.getElementById(\'lightbox\');if(lb){lb.classList.add(\'open\');lb.querySelector(\'img\').src=this.src;}">' : '') +
-          '<button class="reply-btn" data-reply-id="' + r.id + '" data-author="' + esc(r.author_name || '匿名') + '" style="margin-top:4px;">回复</button>' +
-          '</div></div>';
-      }).join('') + '</div>' : '');
 
-    // Reply button handlers
-    detail.querySelectorAll('.reply-btn').forEach(function(btn) {
-      btn.addEventListener('click', function(e) {
-        e.stopPropagation();
-        if (!API.token) { openAuthModal('login'); return; }
-        window._replyTarget = { id: parseInt(this.dataset.replyId), author: this.dataset.author };
-        var indicator = document.createElement('div');
-        indicator.className = 'reply-to';
-        indicator.id = 'replyIndicator';
-        indicator.innerHTML = '回复 @' + esc(this.dataset.author) + ' <span class="cancel-reply" id="cancelReply">✕</span>';
-        var existing = document.getElementById('replyIndicator');
-        if (existing) existing.remove();
-        var ta = document.getElementById('replyText');
-        ta.parentNode.insertBefore(indicator, ta);
-        ta.focus();
-        document.getElementById('cancelReply').addEventListener('click', function() {
-          window._replyTarget = null;
-          indicator.remove();
-        });
-      });
-    });
+  document.getElementById('chanTopicTitle').textContent = t.title || '无标题';
+  document.getElementById('chanTopicMeta').textContent =
+    allReplies.length + ' 条回复 · 由 ' + (t.author_name || '匿名') + ' 发起';
 
-  var modal = document.getElementById('threadModal');
-  if (!modal) { console.error('threadModal not found'); return; }
-  modal.dataset.threadId = threadId;
-  modal.classList.add('open');
-  document.body.style.overflow = 'hidden';
+  var likeBtn = document.getElementById('chanLikeBtn');
+  likeBtn.style.display = 'inline-flex';
+  setHeaderLike(!!t.liked, t.likes || 0);
+
+  renderStream(t, allReplies);
+  renderMembers(t, allReplies);
+  renderTopicList();
+  closeDrawer();
+
+  var comp = document.getElementById('chanComposer');
+  comp.classList.remove('is-off');
+  document.getElementById('replyText').disabled = false;
+
+  if (window.innerWidth <= 760) {
+    var rail = document.getElementById('chanRail');
+    if (rail) rail.classList.remove('open');
+    var bd = document.getElementById('chanBackdrop');
+    if (bd) bd.classList.remove('show');
+  }
 }
 
-// Thread modal close
-var threadModal = document.getElementById('threadModal');
-if (threadModal) {
-  threadModal.querySelector('.modal-close').addEventListener('click', function() { threadModal.classList.remove('open'); document.body.style.overflow = ''; });
-  threadModal.addEventListener('click', function(e) { if (e.target === threadModal) { threadModal.classList.remove('open'); document.body.style.overflow = ''; } });
+/* ---------- 回复目标 ---------- */
+function setReplyTarget(id, author) {
+  window._replyTarget = { id: id, author: author };
+  var chip = document.getElementById('chanReplyChip');
+  chip.style.display = 'inline-flex';
+  chip.innerHTML = '回复 <b>@' + esc(author) + '</b> <span role="cancel">✕</span>';
+  chip.querySelector('[role=cancel]').addEventListener('click', clearReplyTarget);
+  var ta = document.getElementById('replyText');
+  if (ta) ta.focus();
+}
+function clearReplyTarget() {
+  window._replyTarget = null;
+  var chip = document.getElementById('chanReplyChip');
+  chip.style.display = 'none';
+  chip.innerHTML = '';
 }
 
-// New thread form
-document.getElementById('btnNewThread').addEventListener('click', function() {
-  if (!API.token) { openAuthModal('login'); return; }
-  document.getElementById('threadForm').style.display = 'block';
-  this.style.display = 'none';
+/* ---------- 抽屉 ---------- */
+function openDrawer() {
+  document.getElementById('chanRail').classList.add('open');
+  document.getElementById('chanBackdrop').classList.add('show');
+}
+function closeDrawer() {
+  document.getElementById('chanRail').classList.remove('open');
+  document.getElementById('chanBackdrop').classList.remove('show');
+}
+
+/* ---------- 加载数据 ---------- */
+function loadThreads() {
+  return API.get('/api/guestbook').then(function(data) {
+    if (!Array.isArray(data)) {
+      document.getElementById('threadList').innerHTML =
+        '<p style="padding:16px 10px;font-size:12px;color:#c62828;">数据异常，请刷新重试~</p>';
+      return;
+    }
+    allMessagesCache = data;
+    renderTopicList();
+    if (currentTopicId) {
+      var still = data.find(function(m) { return m.id === currentTopicId; });
+      if (still) { openThread(currentTopicId); return; }
+    }
+    var first = data.filter(function(m) { return !m.parent_id; })[0];
+    if (first) openThread(first.id);
+  });
+}
+
+/* ---------- 图片上传：话题 ---------- */
+var threadImgInput = document.getElementById('threadImages');
+var threadImgPrev = document.getElementById('threadImgPreviews');
+document.getElementById('threadImgTrigger').addEventListener('click', function() { threadImgInput.click(); });
+threadImgInput.addEventListener('change', function() {
+  imgListToDataURL(Array.from(threadImgInput.files)).then(function(list) {
+    if (!list.length) return;
+    threadImages = threadImages.concat(list);
+    renderThreadImgs();
+  });
+  threadImgInput.value = '';
 });
-document.getElementById('btnCancelThread').addEventListener('click', function() {
-  document.getElementById('threadForm').style.display = 'none';
-  document.getElementById('btnNewThread').style.display = '';
+function renderThreadImgs() {
+  threadImgPrev.innerHTML = threadImages.map(function(s, i) {
+    return '<div class="img-preview-item"><img src="' + s + '"><button type="button" class="remove-img" data-idx="' + i + '">&times;</button></div>';
+  }).join('');
+  threadImgPrev.querySelectorAll('.remove-img').forEach(function(b) {
+    b.addEventListener('click', function(e) {
+      e.stopPropagation();
+      threadImages.splice(parseInt(this.dataset.idx), 1);
+      renderThreadImgs();
+    });
+  });
+}
+
+/* ---------- 图片上传：回复 ---------- */
+var replyImgInput = document.getElementById('replyImage');
+var replyImgPrev = document.getElementById('replyImgPreview');
+document.getElementById('replyImgTrigger').addEventListener('click', function() { replyImgInput.click(); });
+replyImgInput.addEventListener('change', function() {
+  if (replyImgInput.files.length > 0) {
+    imgToDataURL(replyImgInput.files[0]).then(function(d) { replyImage = d; renderReplyImg(); });
+  }
+  replyImgInput.value = '';
+});
+function renderReplyImg() {
+  if (replyImage) {
+    replyImgPrev.innerHTML = '<div class="img-preview-item"><img src="' + replyImage + '"><button type="button" class="remove-img" id="removeReplyImg">&times;</button></div>';
+    document.getElementById('removeReplyImg').addEventListener('click', function(e) {
+      e.stopPropagation();
+      replyImage = null;
+      replyImgPrev.innerHTML = '';
+    });
+  } else {
+    replyImgPrev.innerHTML = '';
+  }
+}
+
+/* ---------- 发起话题 ---------- */
+var newTopicModal = document.getElementById('newTopicModal');
+function openTopicModal() {
+  if (!API.token) { openAuthModal('login'); return; }
+  newTopicModal.classList.add('open');
+}
+function closeTopicModal() {
+  newTopicModal.classList.remove('open');
   document.getElementById('threadTitle').value = '';
   document.getElementById('threadText').value = '';
-  threadImages = []; renderThreadImgs();
-});
+  threadImages = [];
+  renderThreadImgs();
+}
+document.getElementById('btnNewThread').addEventListener('click', openTopicModal);
+document.getElementById('btnCancelThread').addEventListener('click', closeTopicModal);
+newTopicModal.querySelector('.modal-close').addEventListener('click', closeTopicModal);
+newTopicModal.addEventListener('click', function(e) { if (e.target === newTopicModal) closeTopicModal(); });
 
-// Post new thread
 document.getElementById('threadForm').addEventListener('submit', function(e) {
   e.preventDefault();
   var title = document.getElementById('threadTitle').value.trim();
@@ -366,75 +808,127 @@ document.getElementById('threadForm').addEventListener('submit', function(e) {
   var doPost = function(urls) {
     btn.textContent = '发布中...';
     API.post('/api/guestbook', { title: title, text: text, images: urls }).then(function(d) {
-      if (d.error) { alert(d.error); btn.disabled = false; btn.textContent = '发布帖子'; return; }
-      document.getElementById('threadTitle').value = '';
-      document.getElementById('threadText').value = '';
-      document.getElementById('threadForm').style.display = 'none';
-      document.getElementById('btnNewThread').style.display = '';
-      threadImages = []; renderThreadImgs();
-      btn.disabled = false; btn.textContent = '发布帖子';
+      if (d.error) { alert(d.error); btn.disabled = false; btn.textContent = '发布话题'; return; }
+      closeTopicModal();
+      btn.disabled = false; btn.textContent = '发布话题';
+      if (d.id) { currentTopicId = d.id; }
       loadThreads();
-    }).catch(function() { btn.disabled = false; btn.textContent = '发布帖子'; });
+    }).catch(function() { btn.disabled = false; btn.textContent = '发布话题'; });
   };
   if (imgs.length > 0) {
     API.post('/api/upload', { images: imgs }).then(function(r) {
-      if (r.error) { alert('图片上传失败：' + r.error); btn.disabled = false; btn.textContent = '发布帖子'; return; }
+      if (r.error) { alert('图片上传失败：' + r.error); btn.disabled = false; btn.textContent = '发布话题'; return; }
       doPost(r.urls || []);
-    }).catch(function() { alert('图片上传失败，请检查网络'); btn.disabled = false; btn.textContent = '发布帖子'; });
+    }).catch(function() { alert('图片上传失败，请检查网络'); btn.disabled = false; btn.textContent = '发布话题'; });
   } else {
     doPost([]);
   }
 });
 
-// Reply form submit
-document.getElementById('replyForm').addEventListener('submit', function(e) {
+/* ---------- 发送回复 ---------- */
+var replyForm = document.getElementById('replyForm');
+replyForm.addEventListener('submit', function(e) {
   e.preventDefault();
   if (!API.token) { openAuthModal('login'); return; }
-  var text = document.getElementById('replyText').value.trim();
+  if (!currentTopicId) return;
+  var ta = document.getElementById('replyText');
+  var text = ta.value.trim();
   if (!text) return;
-  var parentId = (window._replyTarget && window._replyTarget.id) ? window._replyTarget.id : parseInt(threadModal.dataset.threadId);
-  window._replyTarget = null;
-  var btn = this.querySelector('button[type=submit]');
-  btn.disabled = true; btn.textContent = '上传中...';
-  var img = replyImage;
+  var parentId = (window._replyTarget && window._replyTarget.id) ? window._replyTarget.id : currentTopicId;
+  var btn = document.getElementById('chanSendBtn');
+  btn.disabled = true; btn.textContent = '发送中...';
   var doReply = function(urls) {
-    btn.textContent = '回复中...';
     API.post('/api/guestbook', { text: text, parentId: parentId, images: urls }).then(function(d) {
-      if (d.error) { alert(d.error); btn.disabled = false; btn.textContent = '回复'; return; }
-      document.getElementById('replyText').value = '';
+      if (d.error) { alert(d.error); btn.disabled = false; btn.textContent = '发送'; return; }
+      ta.value = '';
+      ta.style.height = 'auto';
       replyImage = null; renderReplyImg();
-      var indicator = document.getElementById('replyIndicator');
-      if (indicator) indicator.remove();
-      btn.disabled = false; btn.textContent = '回复';
-      setTimeout(function() {
-        loadThreads().then(function() { openThread(parseInt(threadModal.dataset.threadId)); });
-      }, 300);
-    }).catch(function(e) {
-      console.error('reply error:', e);
-      btn.disabled = false; btn.textContent = '回复';
-    });
+      clearReplyTarget();
+      btn.disabled = false; btn.textContent = '发送';
+      loadThreads();
+    }).catch(function() { btn.disabled = false; btn.textContent = '发送'; });
   };
-  if (img) {
-    API.post('/api/upload', { images: [img] }).then(function(r) {
-      if (r.error) { alert('图片上传失败：' + r.error); btn.disabled = false; btn.textContent = '回复'; return; }
+  if (replyImage) {
+    API.post('/api/upload', { images: [replyImage] }).then(function(r) {
+      if (r.error) { alert('图片上传失败：' + r.error); btn.disabled = false; btn.textContent = '发送'; return; }
       doReply(r.urls || []);
-    }).catch(function() { alert('图片上传失败，请检查网络'); btn.disabled = false; btn.textContent = '回复'; });
+    }).catch(function() { alert('图片上传失败，请检查网络'); btn.disabled = false; btn.textContent = '发送'; });
   } else {
     doReply([]);
   }
 });
 
-// Open thread from notification
+/* 输入框：自动增高 + Enter 发送 */
+var replyTa = document.getElementById('replyText');
+replyTa.addEventListener('input', function() {
+  this.style.height = 'auto';
+  this.style.height = Math.min(this.scrollHeight, 120) + 'px';
+});
+replyTa.addEventListener('keydown', function(e) {
+  if (e.key === 'Enter' && !e.shiftKey && !e.isComposing) {
+    e.preventDefault();
+    if (this.value.trim()) replyForm.dispatchEvent(new Event('submit', { cancelable: true }));
+  }
+});
+
+/* ---------- 点赞话题 ---------- */
+function setHeaderLike(liked, n) {
+  var btn = document.getElementById('chanLikeBtn');
+  var svg = btn.querySelector('svg');
+  if (svg) svg.setAttribute('fill', liked ? 'currentColor' : 'none');
+  document.getElementById('chanLikeCount').textContent = n;
+  btn.classList.toggle('liked', !!liked);
+}
+
+/* 同一条消息在「标题栏」和「消息行」两处都有按钮，点赞后一起同步 */
+function syncLikeUI(id, liked, likes) {
+  var m = allMessagesCache.find(function(x) { return x.id === Number(id); });
+  if (m) { m.likes = likes; m.liked = !!liked; }
+  var btn = document.querySelector('.chan-msg-actions .act-like[data-id="' + id + '"]');
+  if (btn) {
+    btn.innerHTML = likeBtnInner(liked, likes);
+    btn.classList.toggle('liked', !!liked);
+  }
+  if (Number(id) === Number(currentTopicId)) setHeaderLike(!!liked, likes);
+}
+
+document.getElementById('chanLikeBtn').addEventListener('click', function() {
+  if (!API.token) { openAuthModal('login'); return; }
+  if (!currentTopicId) return;
+  var self = this;
+  self.classList.add('bounce');
+  setTimeout(function() { self.classList.remove('bounce'); }, 420);
+  API.post('/api/guestbook/' + currentTopicId + '/like').then(function(d) {
+    if (!d || d.error) return;
+    syncLikeUI(currentTopicId, d.liked, d.likes);
+  });
+});
+
+/* ---------- 搜索 ---------- */
+document.getElementById('gbSearch').addEventListener('input', function() {
+  currentFilter = this.value.trim();
+  renderTopicList();
+});
+
+/* ---------- 移动端抽屉 ---------- */
+document.getElementById('chanDrawerBtn').addEventListener('click', openDrawer);
+document.getElementById('chanBackdrop').addEventListener('click', closeDrawer);
+document.getElementById('chanMembersBtn').addEventListener('click', function() {
+  document.getElementById('chanMembers').classList.toggle('show');
+});
+
+/* ---------- 启动 ---------- */
+window.openThread = openThread;
 var urlParams = new URLSearchParams(window.location.search);
 var openThreadId = urlParams.get('thread');
-if (openThreadId) { setTimeout(function() { openThread(parseInt(openThreadId)); }, 500); }
+if (openThreadId) currentTopicId = parseInt(openThreadId);
 
-window.openThread = openThread;
 loadThreads().catch(function(err) {
   console.error('loadThreads failed:', err);
-  var list = document.getElementById('threadList');
-  if (list) list.innerHTML = '<p style="text-align:center;padding:24px;color:#c62828;">加载失败，请检查网络后刷新重试~</p>';
+  document.getElementById('threadList').innerHTML =
+    '<p style="padding:16px 10px;font-size:12px;color:#c62828;">加载失败，请刷新重试~</p>';
 });
 </script>
+  <script src="/pet/pet.js"></script>
 </body>
 </html>

@@ -135,14 +135,16 @@ function updateHeaderAuth() {
   } else {
     authEl.innerHTML = '<button class="auth-btn" id="btnLogin">登录</button>' +
       '<button class="auth-btn primary" id="btnRegister">注册</button>';
-    document.getElementById('btnLogin').addEventListener('click', openAuthModal);
+    document.getElementById('btnLogin').addEventListener('click', function() { openAuthModal('login'); });
     document.getElementById('btnRegister').addEventListener('click', function() { openAuthModal('register'); });
   }
 }
 
-// ---- Login / Register Modal ----
+// ---- Login / Register / Account Recovery Modal ----
+var AUTH_MODES = { login: 1, register: 1, resetPassword: 1, recoverUsername: 1 };
+
 function openAuthModal(mode) {
-  mode = mode || 'login';
+  if (typeof mode !== 'string' || !AUTH_MODES[mode]) mode = 'login';
   var modal = document.getElementById('authModal');
   if (!modal) {
     modal = document.createElement('div');
@@ -151,61 +153,106 @@ function openAuthModal(mode) {
     modal.innerHTML = '<div class="auth-box">' +
       '<button class="auth-close">&times;</button>' +
       '<h2 id="authTitle">登录</h2>' +
-      '<div class="form-group"><label>用户名</label><input type="text" id="authUsername" placeholder="请输入用户名" maxlength="20"></div>' +
+      '<div class="form-group" id="userGroup"><label>用户名</label><input type="text" id="authUsername" placeholder="请输入用户名" maxlength="20"></div>' +
       '<div class="form-group" id="pwdGroup"><label id="pwdLabel">密码</label><input type="password" id="authPassword" placeholder="请输入密码"></div>' +
-      '<div class="form-group" id="phoneGroup" style="display:none;"><label>手机号</label><input type="text" id="authPhone" placeholder="请输入手机号" maxlength="15"></div>' +
-      '<div class="form-group" id="qqGroup" style="display:none;"><label>QQ号</label><input type="text" id="authQQ" placeholder="请输入QQ号" maxlength="20"></div>' +
-      '<div class="form-group" id="pass2Group" style="display:none;"><label>确认密码</label><input type="password" id="authPassword2" placeholder="请再次输入密码"></div>' +
+      '<div class="form-group" id="phoneGroup" style="display:none;"><label>手机号</label><input type="text" id="authPhone" placeholder="注册时填写的手机号" maxlength="15"></div>' +
+      '<div class="form-group" id="qqGroup" style="display:none;"><label>QQ号</label><input type="text" id="authQQ" placeholder="注册时填写的QQ号" maxlength="20"></div>' +
+      '<div class="form-group" id="pass2Group" style="display:none;"><label>确认密码</label><input type="password" id="authPassword2" placeholder="请再次输入新密码"></div>' +
+      '<div id="authHint" style="display:none;font-size:12px;line-height:1.7;color:#8a8a93;background:#fafafa;border-radius:6px;padding:8px 10px;margin:2px 0 10px;"></div>' +
+      '<div id="authResult" style="display:none;text-align:center;margin:2px 0 10px;"></div>' +
       '<button class="auth-submit-btn" id="authSubmitBtn">登 录</button>' +
       '<div class="auth-msg" id="authMsg"></div>' +
       '<div class="auth-switch" id="authSwitch">没有账号？<a id="authSwitchLink">立即注册</a></div>' +
-      '<div class="auth-switch" id="forgotPwdWrap" style="margin-top:6px;"><a id="forgotPwdLink" style="font-size:12px;color:var(--text-muted);cursor:pointer;">忘记密码？</a></div>' +
+      '<div class="auth-switch" id="authLinks" style="margin-top:8px;display:flex;gap:18px;justify-content:center;">' +
+      '<a id="forgotPwdLink" style="font-size:13px;color:var(--accent);cursor:pointer;">忘记密码？</a>' +
+      '<a id="forgotUserLink" style="font-size:13px;color:var(--accent);cursor:pointer;">忘记用户名？</a>' +
+      '</div>' +
       '</div>';
     document.body.appendChild(modal);
     modal.querySelector('.auth-close').addEventListener('click', function() { modal.classList.remove('open'); });
     modal.addEventListener('click', function(e) { if (e.target === modal) modal.classList.remove('open'); });
-    document.getElementById('authSubmitBtn').addEventListener('click', handleAuthSubmit);
+    document.getElementById('authSubmitBtn').addEventListener('click', function() { handleAuthSubmit(); });
     document.getElementById('authPassword').addEventListener('keydown', function(e) { if (e.key === 'Enter') handleAuthSubmit(); });
+    document.getElementById('authPhone').addEventListener('keydown', function(e) { if (e.key === 'Enter') handleAuthSubmit(); });
+    document.getElementById('authQQ').addEventListener('keydown', function(e) { if (e.key === 'Enter') handleAuthSubmit(); });
     document.getElementById('authSwitch').addEventListener('click', function(e) {
       if (e.target.id === 'authSwitchLink') {
-        var isLogin = document.getElementById('authTitle').textContent === '登录';
-        openAuthModal(isLogin ? 'register' : 'login');
+        var m = document.getElementById('authModal')._mode;
+        openAuthModal(m === 'login' ? 'register' : 'login');
       }
     });
-    document.getElementById('forgotPwdLink').addEventListener('click', function() {
-      openAuthModal('resetPassword');
-    });
+    document.getElementById('forgotPwdLink').addEventListener('click', function() { openAuthModal('resetPassword'); });
+    document.getElementById('forgotUserLink').addEventListener('click', function() { openAuthModal('recoverUsername'); });
   }
+
   var title = document.getElementById('authTitle');
   var btn = document.getElementById('authSubmitBtn');
   var switchText = document.getElementById('authSwitch');
-  var forgotWrap = document.getElementById('forgotPwdWrap');
+  var links = document.getElementById('authLinks');
+  var hint = document.getElementById('authHint');
+  var result = document.getElementById('authResult');
   var msg = document.getElementById('authMsg');
-  if (mode === 'resetPassword') {
-    if (title) title.textContent = '重置密码';
-    if (btn) btn.textContent = '重 置';
-    if (switchText) switchText.innerHTML = '想起密码了？<a id="authSwitchLink">去登录</a>';
-    if (forgotWrap) forgotWrap.style.display = 'none';
-  } else {
-    if (title) title.textContent = mode === 'register' ? '注册' : '登录';
-    if (btn) btn.textContent = mode === 'register' ? '注 册' : '登 录';
-    if (switchText) switchText.innerHTML = mode === 'register' ? '已有账号？<a id="authSwitchLink">去登录</a>' : '没有账号？<a id="authSwitchLink">立即注册</a>';
-    if (forgotWrap) forgotWrap.style.display = mode === 'login' ? 'block' : 'none';
+
+  var TITLES = { login: '登录', register: '注册', resetPassword: '重置密码', recoverUsername: '找回用户名' };
+  var BTNS = { login: '登 录', register: '注 册', resetPassword: '重 置', recoverUsername: '查 找' };
+  var SWITCH = {
+    login: '没有账号？<a id="authSwitchLink">立即注册</a>',
+    register: '已有账号？<a id="authSwitchLink">去登录</a>',
+    resetPassword: '想起密码了？<a id="authSwitchLink">去登录</a>',
+    recoverUsername: '想起用户名了？<a id="authSwitchLink">去登录</a>'
+  };
+  var HINTS = {
+    resetPassword: '需要验证你注册时填写的手机号和 QQ 号。两个都忘了的话，请联系社团管理员人工处理。',
+    recoverUsername: '填写注册时填写的手机号和 QQ 号，即可查出对应的用户名。'
+  };
+
+  if (title) title.textContent = TITLES[mode];
+  if (btn) btn.textContent = BTNS[mode];
+  if (switchText) switchText.innerHTML = SWITCH[mode];
+  if (links) links.style.display = mode === 'login' ? 'flex' : 'none';
+  if (hint) {
+    hint.textContent = HINTS[mode] || '';
+    hint.style.display = HINTS[mode] ? 'block' : 'none';
   }
+  if (result) { result.style.display = 'none'; result.innerHTML = ''; }
   if (msg) { msg.textContent = ''; msg.className = 'auth-msg'; }
-  var isReg = mode === 'register' || mode === 'resetPassword';
-  ['qqGroup','phoneGroup','pass2Group'].forEach(function(id) {
-    var el = document.getElementById(id); if (el) el.style.display = isReg ? 'block' : 'none';
-  });
-  // Update password label for resetPassword mode
+
+  var showUser = mode !== 'recoverUsername';
+  var showPwd = mode !== 'recoverUsername';
+  var showPass2 = mode === 'register' || mode === 'resetPassword';
+  var showContact = mode === 'register' || mode === 'resetPassword' || mode === 'recoverUsername';
+
+  var userGroup = document.getElementById('userGroup');
+  var pwdGroup = document.getElementById('pwdGroup');
+  if (userGroup) userGroup.style.display = showUser ? 'block' : 'none';
+  if (pwdGroup) pwdGroup.style.display = showPwd ? 'block' : 'none';
+  document.getElementById('phoneGroup').style.display = showContact ? 'block' : 'none';
+  document.getElementById('qqGroup').style.display = showContact ? 'block' : 'none';
+  document.getElementById('pass2Group').style.display = showPass2 ? 'block' : 'none';
   var pwdLabel = document.getElementById('pwdLabel');
   if (pwdLabel) pwdLabel.textContent = mode === 'resetPassword' ? '新密码' : '密码';
+  var pwdEl = document.getElementById('authPassword');
+  if (pwdEl) pwdEl.placeholder = mode === 'resetPassword' ? '请输入新密码' : '请输入密码';
+
+  // 用 flex order 让字段顺序随模式变化（用户名 → 手机号 → QQ号 → 密码 → 确认密码）
+  var box = modal.querySelector('.auth-box');
+  if (box) { box.style.display = 'flex'; box.style.flexDirection = 'column'; }
+  var FIXED_ORDER = { authTitle: 1, authHint: 7, authResult: 8, authSubmitBtn: 9, authMsg: 10, authSwitch: 11, authLinks: 12 };
+  var GROUP_ORDER = { userGroup: 2, phoneGroup: 3, qqGroup: 4, pwdGroup: 5, pass2Group: 6 };
+  Object.keys(FIXED_ORDER).forEach(function(id) {
+    var el = document.getElementById(id); if (el) el.style.order = FIXED_ORDER[id];
+  });
+  Object.keys(GROUP_ORDER).forEach(function(id) {
+    var el = document.getElementById(id); if (el) el.style.order = GROUP_ORDER[id];
+  });
+
   modal._mode = mode;
   modal.classList.add('open');
 }
 
 function handleAuthSubmit() {
   var modal = document.getElementById('authModal');
+  var mode = modal._mode || 'login';
   var username = document.getElementById('authUsername').value.trim();
   var password = document.getElementById('authPassword').value.trim();
   var qqEl = document.getElementById('authQQ'); var qq = qqEl ? qqEl.value.trim() : '';
@@ -213,29 +260,45 @@ function handleAuthSubmit() {
   var pass2El = document.getElementById('authPassword2'); var pass2 = pass2El ? pass2El.value : '';
   var msg = document.getElementById('authMsg');
   var btn = document.getElementById('authSubmitBtn');
-  var mode = modal._mode || 'login';
+  var label = { login: '登 录', register: '注 册', resetPassword: '重 置', recoverUsername: '查 找' }[mode] || '登 录';
   msg.textContent = ''; msg.className = 'auth-msg';
-  if (!username) { msg.textContent = '请输入用户名'; msg.className = 'auth-msg error'; return; }
-  if (!password) { msg.textContent = '请输入密码'; msg.className = 'auth-msg error'; return; }
+
+  if (mode !== 'recoverUsername') {
+    if (!username) { msg.textContent = '请输入用户名'; msg.className = 'auth-msg error'; return; }
+    if (!password) { msg.textContent = '请输入密码'; msg.className = 'auth-msg error'; return; }
+  }
   if (mode === 'resetPassword') {
     if (!phone) { msg.textContent = '请输入手机号以验证身份'; msg.className = 'auth-msg error'; return; }
     if (!qq) { msg.textContent = '请输入QQ号以验证身份'; msg.className = 'auth-msg error'; return; }
     if (password !== pass2) { msg.textContent = '两次密码输入不一致'; msg.className = 'auth-msg error'; return; }
   }
+  if (mode === 'recoverUsername') {
+    if (!phone) { msg.textContent = '请输入注册时填写的手机号'; msg.className = 'auth-msg error'; return; }
+    if (!qq) { msg.textContent = '请输入注册时填写的QQ号'; msg.className = 'auth-msg error'; return; }
+  }
+
   btn.disabled = true; btn.textContent = '处理中...';
-  var endpoint = mode === 'register' ? '/api/auth/register' : (mode === 'resetPassword' ? '/api/auth/reset-password' : '/api/auth/login');
-  var payload = mode === 'resetPassword'
-    ? { username: username, phone: phone, qq: qq, newPassword: password }
-    : { username: username, password: password, password2: pass2, phone: phone, qq: qq };
+  var endpoint = '/api/auth/login';
+  var payload = { username: username, password: password, password2: pass2, phone: phone, qq: qq };
+  if (mode === 'register') endpoint = '/api/auth/register';
+  else if (mode === 'resetPassword') { endpoint = '/api/auth/reset-password'; payload = { username: username, phone: phone, qq: qq, newPassword: password }; }
+  else if (mode === 'recoverUsername') { endpoint = '/api/auth/find-username'; payload = { phone: phone, qq: qq }; }
+
   API.post(endpoint, payload).then(function(data) {
-    btn.disabled = false; btn.textContent = mode === 'register' ? '注 册' : (mode === 'resetPassword' ? '重 置' : '登 录');
+    btn.disabled = false; btn.textContent = label;
     if (data.error) { msg.textContent = data.error; msg.className = 'auth-msg error'; return; }
     if (mode === 'register') {
       msg.textContent = '注册成功！请登录'; msg.className = 'auth-msg success';
       setTimeout(function() { openAuthModal('login'); }, 1000);
     } else if (mode === 'resetPassword') {
-      msg.textContent = '密码重置成功！请登录'; msg.className = 'auth-msg success';
-      setTimeout(function() { openAuthModal('login'); }, 1500);
+      msg.textContent = '密码重置成功！请用新密码登录'; msg.className = 'auth-msg success';
+      setTimeout(function() { openAuthModal('login'); document.getElementById('authUsername').value = username; }, 1500);
+    } else if (mode === 'recoverUsername') {
+      var result = document.getElementById('authResult');
+      result.style.display = 'block';
+      result.innerHTML = '<div style="font-size:12px;color:var(--text-muted);">匹配到的用户名</div>' +
+        '<div style="font-size:20px;font-weight:600;color:var(--accent);margin:6px 0 2px;">' + escapeHTML(data.username) + '</div>' +
+        '<div style="font-size:12px;color:var(--text-muted);">' + escapeHTML(data.hint || '') + '</div>';
     } else {
       API.setToken(data.token);
       currentUser = data.user;
@@ -244,8 +307,8 @@ function handleAuthSubmit() {
       document.getElementById('authUsername').value = '';
       document.getElementById('authPassword').value = '';
     }
-  }).catch(function(e) {
-    btn.disabled = false; btn.textContent = mode === 'register' ? '注 册' : (mode === 'resetPassword' ? '重 置' : '登 录');
+  }).catch(function() {
+    btn.disabled = false; btn.textContent = label;
     msg.textContent = '网络错误，请重试'; msg.className = 'auth-msg error';
   });
 }
@@ -420,7 +483,7 @@ function setupSubmissionModal() {
   if (imgInput && imgPreviews) {
     document.getElementById('imgUploadTrigger').addEventListener('click', function() { imgInput.click(); });
     imgInput.addEventListener('change', function() {
-      Array.from(imgInput.files).forEach(function(f) { var r = new FileReader(); r.onload = function() { submissionImages.push(r.result); renderSI(); }; r.readAsDataURL(f); });
+      imgListToDataURL(Array.from(imgInput.files)).then(function(list) { if (list.length) { submissionImages = submissionImages.concat(list); renderSI(); } });
       imgInput.value = '';
     });
   }
@@ -484,7 +547,7 @@ function setupMarketSubmission() {
   if (inp && prev) {
     document.getElementById('marketImgUploadTrigger').addEventListener('click', function() { inp.click(); });
     inp.addEventListener('change', function() {
-      Array.from(inp.files).forEach(function(f) { var r = new FileReader(); r.onload = function() { images.push(r.result); renderMI(); }; r.readAsDataURL(f); });
+      imgListToDataURL(Array.from(inp.files)).then(function(list) { if (list.length) { images = images.concat(list); renderMI(); } });
       inp.value = '';
     });
   }

@@ -1,0 +1,20 @@
+0.3.12 — 上传端图片压缩 + 清理旧原图（2026-11-03）
+
+新增 public/js/imgcompress.js：
+- 上传前在浏览器端把图片缩到长边 1600px 并转 WebP（quality 0.85）
+- 小图不放大、压缩后反而更大时保留原图、GIF 原样上传、任何失败回退原图不阻断上传
+- 实测：3200x2400 的 7.9MB PNG -> 73KB WebP（省 99.1%）
+
+接入的上传入口（7 处）：
+- admin.html：月刊封面、月刊配图
+- guestbook.html：帖子配图、回复配图
+- profile.html：头像（长边 1200，quality 0.88）
+- main.js：同人投稿图、市集商品图
+
+清理：
+- 删除已被 WebP 替代的 14 个旧原图（uploads 9 个 + public/images 5 个），
+  释放 31MB；删除前已逐个校验对应 WebP 存在且非空
+
+备份：
+- /root/backups/dfdm-imgs-20261103-151645.tar.gz（原图 32MB）
+- /root/backups/dfdm-public-uploadfix-20261103-152241.tar.gz

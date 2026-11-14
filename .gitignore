@@ -4,6 +4,7 @@ uploads/
 .env
 .DS_Store
 *.log
+logs/
 .claude/
 参考图片/
 *.docx
@@ -11,3 +12,13 @@ uploads/
 管理账号.txt
 需求文档.md
 东方动漫社神秘据点-需求文档.md
+
+# 本地素材与草稿
+output/
+prototype.html
+prototype-content.html
+个人信息页面模板.txt
+
+# 挂件：只保留注入脚本；构建产物与 Live2D 模型（约 20MB，含版权素材）不入库
+public/pet/*
+!public/pet/pet.js

@@ -13,6 +13,18 @@ app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 app.use(express.static(path.join(__dirname, 'public')));
 
 // Initialize PostgreSQL database
+// 读 .env（无第三方依赖）
+try {
+  const fsx = require('fs');
+  const envPath = path.join(__dirname, '.env');
+  if (fsx.existsSync(envPath)) {
+    for (const line of fsx.readFileSync(envPath, 'utf8').split(/\r?\n/)) {
+      const m = line.match(/^\s*([A-Za-z0-9_]+)\s*=\s*(.*?)\s*$/);
+      if (m && !process.env[m[1]]) process.env[m[1]] = m[2].replace(/^["']|["']$/g, '');
+    }
+  }
+} catch (e) { console.error('[env] 加载失败', e.message); }
+
 const { initDB } = require('./db');
 
 // API Routes
@@ -27,6 +39,7 @@ app.use('/api/announcements', require('./routes/announcements'));
 app.use('/api/comments', require('./routes/comments'));
 app.use('/api/upload', require('./routes/upload'));
 app.use('/api/stats', require('./routes/stats'));
+app.use('/api/pet', require('./routes/pet'));
 
 // SPA fallback
 app.use((req, res) => {
